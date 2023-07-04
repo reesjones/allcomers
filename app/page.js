@@ -14,9 +14,12 @@ export default function Home(): React$Element<any> {
     const data = await fileHandle.arrayBuffer();
     console.log(data);
     const parser = new GoogleSheetsResultParser();
-    const results = parser.parse(data);
+    const parseOutput = parser.parse(data);
+    const results = parseOutput.results;
     console.log("Parsed these results:");
     console.log(results);
+    console.log("Log:");
+    console.log(parseOutput.log);
   }
   return (
     <main className="flex min-h-screen flex-col items-center justify-between p-24">
