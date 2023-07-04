@@ -6,6 +6,14 @@ are from the [Bill Roe All Comers](https://clubnorthwest.org/all-comers) track m
 This is part of an overall efficiency effort made necessary by unprecedented
 growth in 2023 - by far the largest year ever in its 54-year history.
 
+Milestones
+ * Upload file, basic parse of all the results and render in table
+ * Add event-specific cols to the parse
+ * Render an output table with no-op transform (or add 1 dummy column)
+ * Add real transforms
+ * Add filter
+ * Add sorter
+
 Rough steps
  * User selects xlsx file
  * Extract XLSX data into unmodified data model (`Array<Result>`), display on left
