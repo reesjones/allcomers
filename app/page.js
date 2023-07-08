@@ -42,38 +42,76 @@ function getRows(results: Array<Result>) {
   ];
 }
 
+// Allocates and returns new CellObject
+function emptyCell(): CellObject {
+  return {'t': '', 'v': '', 'r': '', 'h': '', 'w': ''};
+}
+
+// Allocates and returns new row (array) of CellObjects with specified width
+function emptyRow(width: number): () => Array<CellObject> {
+  // $FlowFixMe missing array element type (correct is XLSX.CellObject)
+  const fn = () => {
+    const arr = new Array<any>(width);
+    for (let i = 0; i < arr.length; i++) {
+      arr[i] = emptyCell();
+    }
+    return arr;
+  }
+  return fn;
+}
+
+function fillEmpty<T>(arr: Array<T>, filler: () => T, size?: number): Array<T> {
+  console.log(arr);
+  for (let i = 0; i < arr.length; i++) {
+    if (arr[i] == null) {
+      arr[i] = filler();
+    }
+  }
+  if (size != null) {
+    for (let i = arr.length; i < size; i++) {
+      arr[i] = filler();
+    }
+  }
+  return arr;
+}
+
 export type ResultSheetProps = {
   sheet: WorkSheet;
   onCellsChanged: (Array<CellChange<TextCell>>) => void;
 };
 
 export function ResultSheet(props: ResultSheetProps): React$Element<any> {
-  const json = XLSX.utils.sheet_to_json(props.sheet, {header:1});
-  const rows = json.map((row, i) => {
-    return {rowId: i, cells: row.map(cell => {
+  const rows = props.sheet.map((row, i) => {
+    let cells = row.map(cell => {
       let type = i == 0 ? "header" : "text";
-      if (cell == null) {
-        type = "number";
-      }
-      return {type, text: `${cell}`};
-    })};
+      if (cell == null) type = "number";
+      return {type, text: `${cell.v}`};
     });
+    return {rowId: i, cells};
+  });
   const headerRow = {
     rowId: "header",
     cells: rows[0],
   };
-  const largestcol = rows.reduce((max, next) => {
-    if (max == null) return next;
-    if (next.cells.length > max.cells.length) return next;
-    return max;
-  }, null);
-  const cols = (largestcol ?? {cells: []}).cells.map((_, i) => {return {columnId: i, width: 150};});
+  const maxColWidth = rows.reduce((max, next) =>
+    (next.cells.length > max) ? next.cells.length : max, 0);
+  const cols = [];
+  for (let i = 0; i < maxColWidth; i++) {
+    cols.push({columnId: i, width: 150});
+  }
   return (
     <ReactGrid rows={rows} columns={cols} onCellsChanged={props.onCellsChanged}/>
   );
 }
 
 const EXCLUDE_SHEETS = ["Worksheet", "Final Compiled", "Instructions"];
+function filterSheets(workbook: Workbook, excludeList: Array<string>): Workbook {
+  workbook.SheetNames = workbook.SheetNames.filter(n => !EXCLUDE_SHEETS.includes(n));
+  for (const excluded of EXCLUDE_SHEETS) {
+    delete workbook.Sheets[excluded];
+  }
+  return workbook;
+}
 
 export default function Home(): React$Element<any> {
   // TODO Get xlsx flow types
@@ -82,25 +120,29 @@ export default function Home(): React$Element<any> {
     const fileHandle = e.currentTarget.files[0];
     console.log(fileHandle);
     const data = await fileHandle.arrayBuffer();
-    const wb = XLSX.read(data, {dense: true});
+    let wb = XLSX.read(data, {dense: true});
+    wb = filterSheets(wb, EXCLUDE_SHEETS);
+    for (const name of wb.SheetNames) {
+      // Fill undefined cells within each row
+      const rowSizes = Array.from(wb.Sheets[name].map(row => row.length)).filter(n => n != null);
+      const maxColWidth = Math.max(...rowSizes);
+      const filledRows = wb.Sheets[name].map(row => {
+        row = fillEmpty(row, emptyCell, maxColWidth);
+        return row;
+      });
+      // Fill undefined rows within each sheet
+      wb.Sheets[name] = fillEmpty(filledRows, emptyRow(maxColWidth));
+    }
     setWorkbook(wb);
   }
-  let originalPane = (
-    <div>
-      <h2>Select a results spreadsheet from the file picker.</h2>
-    </div>
-  );
-  let compiledPane = (
-    <div>
-      <h2>Select a results spreadsheet from the file picker.</h2>
-    </div>
-  );
+  let originalPane = 
+    <div><h2>Select a results spreadsheet from the file picker.</h2></div>;
+  let compiledPane = originalPane;
   if (workbook != null) {
     // const parser = new GoogleSheetsResultParser();
     // const parseOutput = parser.parse(workbook);
     // const parsedResults = parseOutput.results;
-    console.log(workbook.Sheets);
-    const names = workbook.SheetNames.filter(name => !EXCLUDE_SHEETS.includes(name));
+    const names = workbook.SheetNames;
     const applyCellChange = (sheetName: string, changes: Array<CellChange<TextCell>>, prevWorkbook: Workbook) => {
       const sheet = prevWorkbook.Sheets[sheetName];
       for (const change of changes) {
@@ -117,14 +159,14 @@ export default function Home(): React$Element<any> {
       return prevWorkbook;
     };
     const handleCellChange = (sheetName: string, changes: Array<CellChange<TextCell>>) => {
-      console.log("before handelchange:");
+      console.log("5k zeth before handelchange:");
       console.log(workbook.Sheets['5000m'][2][2]);
       setWorkbook(prevWorkbook => applyCellChange(sheetName, changes, prevWorkbook));
       // TODO see if there's a way to force render
-      console.log("after handelchange:");
+      console.log("5k zeth after handelchange:");
       console.log(workbook.Sheets['5000m'][2][2]);
     };
-    console.log("rendering w/ workbook");
+    console.log("re-rendering");
     originalPane = (
       <Tabs size="sm" defaultValue={names[0]}>
         {names.map(name => {
@@ -143,7 +185,6 @@ export default function Home(): React$Element<any> {
         </TabList>
       </Tabs>
     );
-    // compiledPane = <ReactGrid rows={getRows(parsedResults)} columns={COLS} />;
   }
   return (
     <main className="flex min-h-screen flex-col items-center justify-between p-24">
