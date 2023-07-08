@@ -6,9 +6,7 @@ import {
   Result,
   EMPTY_COL,
 } from "./types";
-// $FlowFixMe avoids "module not found"
 import * as XLSX from 'xlsx';
-// $FlowFixMe avoids "module not found". Importing types separately helps flow
 import {Workbook, Worksheet} from 'xlsx';
 
 export type ParseOutput = {
@@ -23,7 +21,7 @@ export class ResultParser<TInput> {
   }
 }
 
-function getFields(sheet: Worksheet, config: SheetConfig): (any, ResultField) => ?string {
+function getFields(config: SheetConfig): (any, ResultField) => ?string {
   return function (row: Object, field: ResultField): ?string {
     const colnames = config.cols.get(field);
     if (colnames == null) {
@@ -106,7 +104,7 @@ function parseSheet(sheetName: string, sheet: Worksheet): ParseOutput {
   if (config == null) {
     return {error: `Missing config for sheet name '${sheetName}'`, results, log};
   }
-  const f = getFields(sheet, config);
+  const f = getFields(config);
   results.push(...json.map(row => {
     let firstName = f(row, ResultField.FIRST_NAME) ?? "No name";
     let lastName = f(row, ResultField.LAST_NAME) ?? "No name";
@@ -131,14 +129,13 @@ function parseSheet(sheetName: string, sheet: Worksheet): ParseOutput {
 
 const EXCLUDE_SHEETS = ["Worksheet", "Instructions", "Final Compiled"];
 
-export class GoogleSheetsResultParser extends ResultParser<ArrayBuffer> {
-  parse(input: ArrayBuffer): ParseOutput {
-    const wb = XLSX.read(input, {dense: true});
+export class GoogleSheetsResultParser extends ResultParser<Workbook> {
+  parse(input: Workbook): ParseOutput {
     let results: Array<Result> = [];
     let log: Array<string> = [];
-    const sheetNames = wb.SheetNames.filter(sn => !EXCLUDE_SHEETS.includes(sn));
+    const sheetNames = input.SheetNames.filter(sn => !EXCLUDE_SHEETS.includes(sn));
     for (const sheetName of sheetNames) {
-      const sheetResults = parseSheet(sheetName, wb.Sheets[sheetName]);
+      const sheetResults = parseSheet(sheetName, input.Sheets[sheetName]);
       if (sheetResults.error) {
         return sheetResults;
       }
