@@ -61,7 +61,6 @@ function emptyRow(width: number): () => Array<CellObject> {
 }
 
 function fillEmpty<T>(arr: Array<T>, filler: () => T, size?: number): Array<T> {
-  console.log(arr);
   for (let i = 0; i < arr.length; i++) {
     if (arr[i] == null) {
       arr[i] = filler();
@@ -118,7 +117,6 @@ export default function Home(): React$Element<any> {
   const [workbook, setWorkbook] = useState<any>(null);
   const onChange = async (e: SyntheticEvent<HTMLInputElement>) => {
     const fileHandle = e.currentTarget.files[0];
-    console.log(fileHandle);
     const data = await fileHandle.arrayBuffer();
     let wb = XLSX.read(data, {dense: true});
     wb = filterSheets(wb, EXCLUDE_SHEETS);
@@ -139,44 +137,32 @@ export default function Home(): React$Element<any> {
     <div><h2>Select a results spreadsheet from the file picker.</h2></div>;
   let compiledPane = originalPane;
   if (workbook != null) {
-    // const parser = new GoogleSheetsResultParser();
-    // const parseOutput = parser.parse(workbook);
-    // const parsedResults = parseOutput.results;
     const names = workbook.SheetNames;
-    const applyCellChange = (sheetName: string, changes: Array<CellChange<TextCell>>, prevWorkbook: Workbook) => {
-      const sheet = prevWorkbook.Sheets[sheetName];
+    const applyCellChange = (changedSheetName: string, changes: Array<CellChange<TextCell>>, prevWorkbook: Workbook) => {
+      const newWorkbook = XLSX.utils.book_new();
+      const changedSheet = prevWorkbook.Sheets[changedSheetName];
+      for (const nameToCopy of prevWorkbook.SheetNames) {
+        const newSheet = XLSX.utils.aoa_to_sheet(prevWorkbook.Sheets[nameToCopy], {dense: true});
+        XLSX.utils.book_append_sheet(newWorkbook, newSheet, nameToCopy);
+      }
       for (const change of changes) {
-        console.log(`cell change in '${sheetName}' sheet:`);
-        console.log(change);
-        console.log(sheet[change.rowId][change.columnId]);
-        const cell = sheet[change.rowId][change.columnId];
+        const cell = newWorkbook.Sheets[changedSheetName][change.rowId][change.columnId];
         cell.v = change.newCell.text;
         cell.h = change.newCell.text;
         cell.w = change.newCell.text;
         cell.r = `<t>${change.newCell.text}</t>`;
-        console.log(sheet[change.rowId][change.columnId]);
       }
-      return prevWorkbook;
+      return newWorkbook;
     };
-    const handleCellChange = (sheetName: string, changes: Array<CellChange<TextCell>>) => {
-      console.log("5k zeth before handelchange:");
-      console.log(workbook.Sheets['5000m'][2][2]);
-      setWorkbook(prevWorkbook => applyCellChange(sheetName, changes, prevWorkbook));
-      // TODO see if there's a way to force render
-      console.log("5k zeth after handelchange:");
-      console.log(workbook.Sheets['5000m'][2][2]);
-    };
-    console.log("re-rendering");
     originalPane = (
       <Tabs size="sm" defaultValue={names[0]}>
         {names.map(name => {
-          if (name == "Long Jump") {
-            console.log(workbook.Sheets[name]);
-          }
           return (<TabPanel value={name} key={name}>
             <ResultSheet
               sheet={workbook.Sheets[name]}
-              onCellsChanged={(changes: Array<CellChange<TextCell>>) => handleCellChange(name, changes)}
+              onCellsChanged={(changes: Array<CellChange<TextCell>>) => {
+                setWorkbook(prevWorkbook => applyCellChange(name, changes, prevWorkbook));
+              }}
             />
           </TabPanel>);
         })}

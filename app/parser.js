@@ -127,13 +127,11 @@ function parseSheet(sheetName: string, sheet: Worksheet): ParseOutput {
   return {results, error: null, log};
 }
 
-const EXCLUDE_SHEETS = ["Worksheet", "Instructions", "Final Compiled"];
-
 export class GoogleSheetsResultParser extends ResultParser<Workbook> {
   parse(input: Workbook): ParseOutput {
     let results: Array<Result> = [];
     let log: Array<string> = [];
-    const sheetNames = input.SheetNames.filter(sn => !EXCLUDE_SHEETS.includes(sn));
+    const sheetNames = input.SheetNames;
     for (const sheetName of sheetNames) {
       const sheetResults = parseSheet(sheetName, input.Sheets[sheetName]);
       if (sheetResults.error) {
