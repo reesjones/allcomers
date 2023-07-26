@@ -1,5 +1,5 @@
 // @flow
-import assert from './assert'
+import {assert} from './util'
 import {Event, Result, SortDirection} from './types'
 
 

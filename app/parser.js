@@ -7,7 +7,7 @@ import {
   EMPTY_COL,
 } from "./types";
 import * as XLSX from 'xlsx';
-import {Workbook, Worksheet} from 'xlsx';
+import {CellObject, Workbook, Worksheet} from 'xlsx';
 
 export type ParseOutput = {
   results: Array<Result>;
@@ -21,21 +21,15 @@ export class ResultParser<TInput> {
   }
 }
 
-function getFields(config: SheetConfig): (any, ResultField) => ?string {
-  return function (row: Object, field: ResultField): ?string {
-    const colnames = config.cols.get(field);
-    if (colnames == null) {
-      throw new Error(
-        `Missing column '${ResultField.getName(field)}' in sheet config for ` +
-        `event ${Event.getName(config.event)}`
-      );
-    }
-    for (const col of colnames) {
-      if (Object.keys(row).includes(col)) {
-        return row[col];
-      }
-    }
-    return null;
+function getFields(name: string, config: SheetConfig, headerRow: Array<CellObject>): (Array<CellObject>, ResultField) => ?string {
+  const colMap = new Map<ResultField, ?number>();
+  for (const [field, cols] of config.cols) {
+    const idx = headerRow.findIndex(cell => cell != null && cols.includes(cell.v));
+    if (idx != -1) colMap.set(field, idx);
+  }
+  return function (row: Array<CellObject>, field: ResultField): ?string {
+    const idx = colMap.get(field);
+    return (idx == null) ? null : row[idx].v;
   };
 }
 
@@ -62,12 +56,13 @@ const DEFAULT_COLS: Map<ResultField, Array<string>> = new Map<ResultField, Array
   [ResultField.LANE, ["Lane"]],
   [ResultField.MARK, ["Results", "Result"]],
 ]);
+const emptyArrayFlowSafe: Array<string> = [""].filter(s => false);
 const RELAY_COLS: Map<ResultField, Array<string>> = new Map<ResultField, Array<string>>([
-  [ResultField.AGE, [""]],
-  [ResultField.FIRST_NAME, [""]],
-  [ResultField.LAST_NAME, [""]],
+  [ResultField.AGE, emptyArrayFlowSafe],
+  [ResultField.FIRST_NAME, emptyArrayFlowSafe],
+  [ResultField.LAST_NAME, emptyArrayFlowSafe],
   [ResultField.TEAM, ["Team Name"]],
-  [ResultField.GENDER, [""]],
+  [ResultField.GENDER, emptyArrayFlowSafe],
   [ResultField.HEAT, ["Heat"]],
   [ResultField.LANE, ["Lane"]],
   [ResultField.MARK, ["Results", "Result"]],
@@ -96,24 +91,32 @@ const SHEET_CONFIGS: Map<string, SheetConfig> = new Map([
   ["4x400m", {event: Event.E4x400, cols: RELAY_COLS}],
 ]);
 
-function parseSheet(sheetName: string, sheet: Worksheet): ParseOutput {
-  const json = XLSX.utils.sheet_to_json(sheet);
+function parseSheet(sheetName: string, sheet: Array<Array<CellObject>>): ParseOutput {
   const config = SHEET_CONFIGS.get(sheetName);
   const results: Array<Result> = [];
   const log: Array<string> = [];
   if (config == null) {
     return {error: `Missing config for sheet name '${sheetName}'`, results, log};
   }
-  const f = getFields(config);
-  results.push(...json.map(row => {
+  if (sheet.length <= 1) return {results, log, error: null};
+
+  const f = getFields(sheetName, config, sheet[0]);
+  results.push(...sheet.slice(1).map(row => {
     let firstName = f(row, ResultField.FIRST_NAME) ?? "No name";
     let lastName = f(row, ResultField.LAST_NAME) ?? "No name";
     let mark: ?string = f(row, ResultField.MARK);
+    // if (sheetName == "4x100m") debugger;
     if (mark == null) {
-      if (Object.keys(row).includes(EMPTY_COL)) {
-        mark = row[EMPTY_COL];
+      if (sheet[0].includes(EMPTY_COL)) {
+        const emptyIdx = sheet[0].findIndex(cell => cell == EMPTY_COL);
+        if (emptyIdx != -1) {
+          mark = row[emptyIdx].v;
+        } else {
+          log.push(`In the '${sheetName}' tab, ignoring row AAAA: ${JSON.stringify(row)}`);
+          return null;
+        }
       } else {
-        log.push(`In the '${sheetName}' tab, ignoring row: ${JSON.stringify(row)}`);
+        log.push(`In the '${sheetName}' tab, ignoring row BBBB: ${JSON.stringify(row)}`);
         return null;
       }
     }
@@ -124,6 +127,7 @@ function parseSheet(sheetName: string, sheet: Worksheet): ParseOutput {
       mark,
     );
   }).filter(r => r != null));
+  console.log(results);
   return {results, error: null, log};
 }
 

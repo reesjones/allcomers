@@ -47,6 +47,14 @@ export enum ResultField {
 
 export const EMPTY_COL = "__EMPTY";
 
+export type CellObject = {
+  't': string,
+  'v': string,
+  'r': string,
+  'h': string,
+  'w': string,
+};
+
 /**
  * Represents one result of an athlete in an event. Uniquely identified by
  * {firstName, lastName, event} fields (TODO: this is wrong. handle duplicate names)
@@ -72,7 +80,17 @@ export class Result {
   // Returns the value of the field representing a number score which defines
   // the total ordering of rank. Null indicates no score (DNS, DNF, NM, NH, etc.)
   getScore(): ?number {
-    throw new Error("Result is an abstract class")
+    throw new Error("Result is an abstract class");
+  }
+
+  // Returns all fields tracked by the result (subclasses may override this to add more fields)
+  getFields(): Map<ResultField, string> {
+    return new Map([
+      [ResultField.FIRST_NAME, this.firstName],
+      [ResultField.LAST_NAME, this.lastName],
+      [ResultField.EVENT, (this.event: string)],
+      [ResultField.MARK, this.mark],
+    ]);
   }
 }
 
