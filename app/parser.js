@@ -105,7 +105,6 @@ function parseSheet(sheetName: string, sheet: Array<Array<CellObject>>): ParseOu
     let firstName = f(row, ResultField.FIRST_NAME) ?? "No name";
     let lastName = f(row, ResultField.LAST_NAME) ?? "No name";
     let mark: ?string = f(row, ResultField.MARK);
-    // if (sheetName == "4x100m") debugger;
     if (mark == null) {
       if (sheet[0].includes(EMPTY_COL)) {
         const emptyIdx = sheet[0].findIndex(cell => cell == EMPTY_COL);
@@ -127,7 +126,6 @@ function parseSheet(sheetName: string, sheet: Array<Array<CellObject>>): ParseOu
       mark,
     );
   }).filter(r => r != null));
-  console.log(results);
   return {results, error: null, log};
 }
 

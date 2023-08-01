@@ -17,6 +17,31 @@ export type ResultSheetStatelessProps = {
 };
 
 /**
+ * Makes a deep copy of prevWorkbook, applies changes to changed sheet to the
+ * deep copy, and returns the deep copy.
+ */
+export function applyCellChanges(
+  changedSheetName: string,
+  changes: Array<CellChange<TextCell>>,
+  prevWorkbook: Workbook,
+): Workbook {
+  const newWorkbook = XLSX.utils.book_new();
+  const changedSheet = prevWorkbook.Sheets[changedSheetName];
+  for (const nameToCopy of prevWorkbook.SheetNames) {
+    const newSheet = XLSX.utils.aoa_to_sheet(prevWorkbook.Sheets[nameToCopy], {dense: true});
+    XLSX.utils.book_append_sheet(newWorkbook, newSheet, nameToCopy);
+  }
+  for (const change of changes) {
+    const cell = newWorkbook.Sheets[changedSheetName][change.rowId][change.columnId];
+    cell.v = change.newCell.text;
+    cell.h = change.newCell.text;
+    cell.w = change.newCell.text;
+    cell.r = `<t>${change.newCell.text}</t>`;
+  }
+  return newWorkbook;
+};
+
+/**
  * Renders a stateless single sheet (grid of cells). onCellsChanged callback
  * allows parent to maintain state and enable editability.
  */
@@ -87,5 +112,18 @@ export function ResultWorkbookStateless(props: ResultWorkbookStatelessProps): Re
 }
 
 /**
- * TODO: Create stateful ResultWorkbook component for Compiled tab
+ * Stateful version of ResultWorkbookStateless. Uses initialWorkbook
  */
+export function ResultWorkbook(props: {initialWorkbook: ?Workbook}): React$Element<any> {
+  const [workbook, setWorkbook] = useState(props.initialWorkbook);
+  if (props.initialWorkbook == null) {
+    return <div>No workbook selected.</div>
+  }
+  return (
+    <ResultWorkbookStateless
+      workbook={workbook}
+      onCellsChanged={(changedSheetName: string, changes: Array<CellChange<TextCell>>) => {
+        setWorkbook(prevWorkbook => applyCellChanges(changedSheetName, changes, prevWorkbook))
+      }} />
+  );
+}

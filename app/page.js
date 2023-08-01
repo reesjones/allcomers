@@ -14,7 +14,7 @@ import TabPanel from '@mui/joy/TabPanel';
 import TabList from '@mui/joy/TabList';
 import Tabs from '@mui/joy/Tabs';
 import Sheet from '@mui/joy/Sheet';
-import { ResultWorkbookStateless } from './ResultSheet';
+import { applyCellChanges, ResultWorkbook, ResultWorkbookStateless } from './ResultSheet';
 
 const HDR_ROW = {
   rowId: "header",
@@ -91,25 +91,21 @@ function camelize(str: string): string {
   });
 }
 
+function resultToRow(result: Result, fields: Array<ResultField>): Array<string> {
+  const fieldValues = result.getFields();
+  return fields.map(f => fieldValues.get(f) ?? "");
+}
+
 export function CompiledSheet(props: {results: Array<Result>}): React$Element<any> {
   const fields = [...getAllFields(props.results)];
-  const headerRow = {
-    rowId: "header",
-    cells: fields.map(field => {
-      const field_parts = (field: string).split("_").map(part => camelize(part));
-      return {type: "header", text: field_parts.join(" ")};
-    }),
-  };
-  const cols = fields.map(_ => {return {width: 150};});
-  const rows = [headerRow, ...props.results.map(result => {
-    const cells = new Array<{type: string, text: string}>(fields.length);
-    [...result.getFields()].forEach(([field, val]) => {
-      const idx = fields.findIndex(f => f === field);
-      cells[idx] = {type: "text", text: `${val}`};
-    });
-    return {rowId: result.key(), cells};
-  })];
-  return <ReactGrid rows={rows} columns={COLS} />
+  const headerRow = fields.map(field => 
+    (field: string).split("_").map(part => camelize(part)).join(" "));
+  const rowOfStrings = props.results.map((result, resultIdx) => resultToRow(result, fields));
+  const rows = [headerRow, ...rowOfStrings];
+  const aoa = XLSX.utils.aoa_to_sheet(rows, {dense: true});
+  const aoaWorkbook = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(aoaWorkbook, aoa, "Compiled");
+  return <ResultWorkbook initialWorkbook={aoaWorkbook} />;
 }
 
 const EXCLUDE_SHEETS = ["Worksheet", "Final Compiled", "Instructions"];
@@ -120,31 +116,6 @@ function filterSheets(workbook: Workbook, excludeList: Array<string>): Workbook 
   }
   return workbook;
 }
-
-/**
- * Makes a deep copy of prevWorkbook, applies changes to changed sheet to the
- * deep copy, and returns the deep copy.
- */
-function applyCellChanges(
-  changedSheetName: string,
-  changes: Array<CellChange<TextCell>>,
-  prevWorkbook: Workbook,
-): Workbook {
-  const newWorkbook = XLSX.utils.book_new();
-  const changedSheet = prevWorkbook.Sheets[changedSheetName];
-  for (const nameToCopy of prevWorkbook.SheetNames) {
-    const newSheet = XLSX.utils.aoa_to_sheet(prevWorkbook.Sheets[nameToCopy], {dense: true});
-    XLSX.utils.book_append_sheet(newWorkbook, newSheet, nameToCopy);
-  }
-  for (const change of changes) {
-    const cell = newWorkbook.Sheets[changedSheetName][change.rowId][change.columnId];
-    cell.v = change.newCell.text;
-    cell.h = change.newCell.text;
-    cell.w = change.newCell.text;
-    cell.r = `<t>${change.newCell.text}</t>`;
-  }
-  return newWorkbook;
-};
 
 export default function Home(): React$Element<any> {
   // TODO Get xlsx flow types
@@ -172,15 +143,14 @@ export default function Home(): React$Element<any> {
     <div><h2>Select a results spreadsheet from the file picker.</h2></div>;
   let compiledPane: React$Element<any> = <div />;
   if (workbook != null) {
-    console.log("workbook");
-    console.log(workbook);
     const parser = new GoogleSheetsResultParser();
     const parseOutput = parser.parse(workbook);
-    console.log("parseOutput");
-    console.log(parseOutput);
     const parsedResults = parseOutput.results;
-    // compiledPane = <ReactGrid rows={getRows(parsedResults)} columns={COLS} />
-    compiledPane = <CompiledSheet results={parsedResults} />;
+    if (parseOutput.error) {
+      compiledPane = <div>Error parsing input sheet: {parseOutput.error}</div>;
+    } else {
+      compiledPane = <CompiledSheet results={parsedResults} />;
+    }
   }
   return (
     <main className="flex min-h-screen flex-col items-center justify-between p-24">
