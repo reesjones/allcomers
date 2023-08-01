@@ -9,6 +9,8 @@ import {Result, ResultField} from './types';
 import {fillEmpty, emptyRow, emptyCell} from './util';
 import {ReactGrid, CellChange, Column, Row, TextCell} from "@silevis/reactgrid";
 import "@silevis/reactgrid/styles.css";
+import Button from '@mui/joy/Button';
+import ButtonGroup from '@mui/joy/ButtonGroup';
 import Tab from '@mui/joy/Tab';
 import TabPanel from '@mui/joy/TabPanel';
 import TabList from '@mui/joy/TabList';
@@ -117,9 +119,21 @@ function filterSheets(workbook: Workbook, excludeList: Array<string>): Workbook 
   return workbook;
 }
 
+enum SelectedTab {
+  ORIGINAL,
+  COMPILED,
+};
+
 export default function Home(): React$Element<any> {
   // TODO Get xlsx flow types
   const [workbook, setWorkbook] = useState<any/*Workbook*/>(null);
+  const [selectedTab, setSelectedTab] = useState<SelectedTab>(SelectedTab.ORIGINAL);
+  const [originalWorkbookVersion, setOriginalWorkbookVersion] = useState(0);
+
+  const selectedStyle = {};
+  const hiddenStyle = {display: "none"};
+  const originalTabStyle = selectedTab === SelectedTab.ORIGINAL ? selectedStyle: hiddenStyle;
+  const compiledTabStyle = selectedTab === SelectedTab.COMPILED ? selectedStyle: hiddenStyle;
 
   const onFileSelectorChange = async (e: SyntheticEvent<HTMLInputElement>) => {
     const fileHandle = e.currentTarget.files[0];
@@ -139,8 +153,6 @@ export default function Home(): React$Element<any> {
     }
     setWorkbook(wb);
   }
-  let originalPane = 
-    <div><h2>Select a results spreadsheet from the file picker.</h2></div>;
   let compiledPane: React$Element<any> = <div />;
   if (workbook != null) {
     const parser = new GoogleSheetsResultParser();
@@ -153,27 +165,27 @@ export default function Home(): React$Element<any> {
     }
   }
   return (
-    <main className="flex min-h-screen flex-col items-center justify-between p-24">
-      <div>
-        <input type='file' onChange={onFileSelectorChange} accept="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" />
-        <Sheet>
-          <Tabs size="lg">
-            <TabList variant="plain" color="neutral">
-              <Tab>Original</Tab>
-              <Tab>Compiled</Tab>
-            </TabList>
-            <TabPanel value={0}>
-              {originalPane}
-              <ResultWorkbookStateless
-                workbook={workbook}
-                onCellsChanged={(changedSheetName: string, changes: Array<CellChange<TextCell>>) => {
-                  setWorkbook(prevWorkbook => applyCellChanges(changedSheetName, changes, prevWorkbook))
-                }} />
-            </TabPanel>
-            <TabPanel value={1}>
-              {compiledPane}
-            </TabPanel>
-          </Tabs>
+    <main className="flex min-h-screen flex-col items-center justify-between p-4">
+      <div style={{width: "100%", height: "90%"}}>
+        <div className="p-4">
+          <input type='file' onChange={onFileSelectorChange} accept="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" />
+        </div>
+        <Sheet className="p-4">
+          <ButtonGroup sx={{display: 'flex', justifyContent: 'center'}}>
+              <Button sx={{width: 300}} size="lg" onClick={(e) => setSelectedTab(SelectedTab.ORIGINAL)}>Original</Button>
+              <Button sx={{width: 300}} size="lg" onClick={(e) => setSelectedTab(SelectedTab.COMPILED)}>Compiled</Button>
+          </ButtonGroup>
+          <div style={originalTabStyle}>
+            <ResultWorkbookStateless
+              workbook={workbook}
+              onCellsChanged={(changedSheetName: string, changes: Array<CellChange<TextCell>>) => {
+                setWorkbook(prevWorkbook => applyCellChanges(changedSheetName, changes, prevWorkbook))
+                setOriginalWorkbookVersion(ver => ver + 1);
+              }} />
+          </div>
+          <div style={compiledTabStyle} key={originalWorkbookVersion}>
+            {compiledPane}
+          </div>
         </Sheet>
       </div>
     </main>
