@@ -28,7 +28,7 @@ export enum Event {
   E4x400,
 };
 
-export enum SortDirection {
+export enum RankDirection {
   ASCENDING,
   DESCENDING,
 };
@@ -107,7 +107,8 @@ function DistanceScore(mark: string): ?number {
   return null;
 }
 
-// function ImperialHeightScore(mark: string): ?number {}
+// Converts marks of feet and inches, F'i", to 12F+i (F=feet, i=inches)
+// function ImperialLengthScore(mark: string): ?number {}
 
 export class ThrowResult extends Result {
   implementWeight: number;

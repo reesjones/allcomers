@@ -6,6 +6,8 @@ import * as XLSX from 'xlsx';
 import {Workbook} from 'xlsx';
 import {ResultParser, GoogleSheetsResultParser} from './parser';
 import {Result, ResultField} from './types';
+import {Pipeline} from './pipeline/core';
+import {NoNameFilter} from './pipeline/filters';
 import {fillEmpty, emptyRow, emptyCell} from './util';
 import {ReactGrid, CellChange, Column, Row, TextCell} from "@silevis/reactgrid";
 import "@silevis/reactgrid/styles.css";
@@ -17,6 +19,7 @@ import TabList from '@mui/joy/TabList';
 import Tabs from '@mui/joy/Tabs';
 import Sheet from '@mui/joy/Sheet';
 import { applyCellChanges, ResultWorkbook, ResultWorkbookStateless } from './ResultSheet';
+import PipelineBuilder from './pipeline/builder';
 
 const HDR_ROW = {
   rowId: "header",
@@ -99,11 +102,17 @@ function resultToRow(result: Result, fields: Array<ResultField>): Array<string> 
 }
 
 export function CompiledSheet(props: {results: Array<Result>}): React$Element<any> {
-  const fields = [...getAllFields(props.results)];
+  const pipe = new PipelineBuilder()
+    .filter(new NoNameFilter())
+    .build();
+  const transformedResults = pipe.run(props.results);
+
+  const fields = [...getAllFields(transformedResults)];
   const headerRow = fields.map(field => 
     // Convert ResultField enum values to human-formatted
+    // TODO: Map instead to expected column names on athletic.net
     (field: string).split("_").map(part => camelize(part)).join(" "));
-  const rowOfStrings = props.results.map((result, resultIdx) => resultToRow(result, fields));
+  const rowOfStrings = transformedResults.map((result, resultIdx) => resultToRow(result, fields));
   const rows = [headerRow, ...rowOfStrings];
   const aoa = XLSX.utils.aoa_to_sheet(rows, {dense: true});
   const aoaWorkbook = XLSX.utils.book_new();
