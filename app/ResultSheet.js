@@ -65,7 +65,12 @@ function ResultSheetStateless(props: ResultSheetStatelessProps): React$Element<a
     cols.push({columnId: i, width: 150});
   }
   return (
-    <ReactGrid rows={rows} columns={cols} onCellsChanged={props.onCellsChanged}/>
+    <ReactGrid
+      rows={rows}
+      columns={cols}
+      onCellsChanged={props.onCellsChanged}
+      enableRangeSelection
+    />
   );
 };
 
@@ -91,11 +96,13 @@ export function ResultWorkbookStateless(props: ResultWorkbookStatelessProps): Re
     };
     return (
       <TabPanel value={name} key={name}>
-        <ResultSheetStateless
-          sheet={sheet}
-          name={name}
-          onCellsChanged={(changes) => props.onCellsChanged(name, changes)}
-        />
+        <div style={{height: "80vh", overflow: "scroll"}}>
+          <ResultSheetStateless
+            sheet={sheet}
+            name={name}
+            onCellsChanged={(changes) => props.onCellsChanged(name, changes)}
+          />
+        </div>
       </TabPanel>
     );
   });
@@ -103,9 +110,9 @@ export function ResultWorkbookStateless(props: ResultWorkbookStatelessProps): Re
     <div>
       <Tabs size="sm" defaultValue={workbook.SheetNames[0]}>
         {tabs}
-      <TabList variant="soft" color="primary">
-        {workbook.SheetNames.map(name => <Tab value={name} key={name}>{name}</Tab>)}
-      </TabList>
+        <TabList variant="soft" color="primary" tabFlex="auto">
+          {workbook.SheetNames.map(name => <Tab value={name} key={name}>{name}</Tab>)}
+        </TabList>
       </Tabs>
     </div>
   );

@@ -101,6 +101,7 @@ function resultToRow(result: Result, fields: Array<ResultField>): Array<string> 
 export function CompiledSheet(props: {results: Array<Result>}): React$Element<any> {
   const fields = [...getAllFields(props.results)];
   const headerRow = fields.map(field => 
+    // Convert ResultField enum values to human-formatted
     (field: string).split("_").map(part => camelize(part)).join(" "));
   const rowOfStrings = props.results.map((result, resultIdx) => resultToRow(result, fields));
   const rows = [headerRow, ...rowOfStrings];
@@ -165,8 +166,8 @@ export default function Home(): React$Element<any> {
     }
   }
   return (
-    <main className="flex min-h-screen flex-col items-center justify-between p-4">
-      <div style={{width: "100%", height: "90%"}}>
+    <main className="flex min-h-screen flex-col items-center justify-between p-4" style={{height: "1vh"}}>
+      <div style={{width: "100%", height: "100%"}}>
         <div className="p-4">
           <input type='file' onChange={onFileSelectorChange} accept="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" />
         </div>
