@@ -70,6 +70,7 @@ function ResultSheetStateless(props: ResultSheetStatelessProps): React$Element<a
       columns={cols}
       onCellsChanged={props.onCellsChanged}
       enableRangeSelection
+      enableRowSelection
     />
   );
 };
