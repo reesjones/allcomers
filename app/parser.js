@@ -1,5 +1,8 @@
 // @flow
 'use client'
+import type { Scorable } from "./types";
+import { NullScorable } from "./pipeline/scores";
+
 import {
   Event,
   ResultField,
@@ -96,6 +99,14 @@ function getFields(name: string, config: SheetConfig, headerRow: Array<CellObjec
   };
 }
 
+function getScorableForEvent(event: Event): Scorable {
+  // TODO implement
+  switch (event) {
+    default:
+      return new NullScorable();
+  }
+}
+
 function parseSheet(sheetName: string, sheet: Array<Array<CellObject>>): ParseOutput {
   const config = SHEET_CONFIGS.get(sheetName);
   let results: Array<Result> = [];
@@ -126,6 +137,7 @@ function parseSheet(sheetName: string, sheet: Array<Array<CellObject>>): ParseOu
       mark = `${row[emptyIdx].v}`;
     }
     return new Result(
+      getScorableForEvent(config.event),
       firstName,
       lastName,
       config.event,

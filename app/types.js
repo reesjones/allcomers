@@ -1,5 +1,4 @@
 // @flow
-
 import {str} from "./util";
 
 export enum Event {
@@ -49,26 +48,23 @@ export enum RankDirection {
 
 export const EMPTY_COL = "__EMPTY";
 
-export type CellObject = {
-  't': string,
-  'v': string,
-  'r': string,
-  'h': string,
-  'w': string,
-};
+export interface Scorable {
+  score(mark: string, fields: Map<ResultField, string>): ?number;
+}
 
 /**
  * Represents one result of an athlete in an event. Uniquely identified by
- * {firstName, lastName, event} fields (TODO: this is wrong. handle duplicate names)
+ * {firstName, lastName, event} fields (TODO: this can break, should handle duplicate names)
  */
 export class Result {
+  scorable: Scorable;
   firstName: string;
   lastName: string;
   event: Event;
   mark: string;
-  _score: ?number;
 
-  constructor(firstName: string, lastName: string, event: Event, mark: string) {
+  constructor(scorable: Scorable, firstName: string, lastName: string, event: Event, mark: string) {
+    this.scorable = scorable;
     this.firstName = firstName;
     this.lastName = lastName;
     this.event = event;
@@ -85,7 +81,8 @@ export class Result {
    * or DNS/DNF/NH/NM/etc.
    */
   getScore(): ?number {
-    throw new Error("Result is an abstract class");
+    // TODO replace empty map with field map after refactor
+    return this.scorable.score(this.mark, new Map());
   }
 
   // Returns all fields tracked by the result (subclasses may override this to add more fields)
@@ -105,16 +102,6 @@ export enum WeightUnit {
   LB,
 };
 
-function DistanceScore(mark: string): ?number {
-  if (/\d+\.\d+/.test(mark)) {
-    return parseFloat(mark);
-  }
-  return null;
-}
-
-// Converts marks of feet and inches, F'i", to 12F+i (F=feet, i=inches)
-// function ImperialLengthScore(mark: string): ?number {}
-
 export class ThrowResult extends Result {
   implementWeight: number;
   implementWeightUnit: WeightUnit;
@@ -126,8 +113,12 @@ export class ThrowResult extends Result {
   }
 }
 
-export class ShotputResult extends ThrowResult {
-  getScore(): ?number {
-    return DistanceScore(this.mark);
-  }
-}
+// Beginning of attempt to add type annotations for spreadsheet library
+// TODO - flesh out, fix flow typing in rest of project
+export type CellObject = {
+  't': string,
+  'v': string,
+  'r': string,
+  'h': string,
+  'w': string,
+};
