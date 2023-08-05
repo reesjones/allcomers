@@ -21,18 +21,6 @@ export class ResultParser<TInput> {
   }
 }
 
-function getFields(name: string, config: SheetConfig, headerRow: Array<CellObject>): (Array<CellObject>, ResultField) => ?string {
-  const colMap = new Map<ResultField, ?number>();
-  for (const [field, cols] of config.cols) {
-    const idx = headerRow.findIndex(cell => cell != null && cols.includes(cell.v));
-    if (idx != -1) colMap.set(field, idx);
-  }
-  return function (row: Array<CellObject>, field: ResultField): ?string {
-    const idx = colMap.get(field);
-    return (idx == null) ? null : row[idx].v;
-  };
-}
-
 type SheetConfig = {
   event: Event,
   cols: Map<ResultField, Array<string>>,
@@ -56,13 +44,14 @@ const DEFAULT_COLS: Map<ResultField, Array<string>> = new Map<ResultField, Array
   [ResultField.LANE, ["Lane"]],
   [ResultField.MARK, ["Results", "Result"]],
 ]);
-const emptyArrayFlowSafe: Array<string> = [""].filter(s => false);
+
+const IgnoreThisField: Array<string> = [""].filter(s => false);
 const RELAY_COLS: Map<ResultField, Array<string>> = new Map<ResultField, Array<string>>([
-  [ResultField.AGE, emptyArrayFlowSafe],
-  [ResultField.FIRST_NAME, emptyArrayFlowSafe],
-  [ResultField.LAST_NAME, emptyArrayFlowSafe],
+  [ResultField.AGE, IgnoreThisField],
+  [ResultField.FIRST_NAME, IgnoreThisField],
+  [ResultField.LAST_NAME, IgnoreThisField],
   [ResultField.TEAM, ["Team Name"]],
-  [ResultField.GENDER, emptyArrayFlowSafe],
+  [ResultField.GENDER, IgnoreThisField],
   [ResultField.HEAT, ["Heat"]],
   [ResultField.LANE, ["Lane"]],
   [ResultField.MARK, ["Results", "Result"]],
@@ -91,33 +80,50 @@ const SHEET_CONFIGS: Map<string, SheetConfig> = new Map([
   ["4x400m", {event: Event.E4x400, cols: RELAY_COLS}],
 ]);
 
+/**
+ * Returns function which maps ResultField to matching cell value in a row, based
+ * on the header row passed in
+ */
+function getFields(name: string, config: SheetConfig, headerRow: Array<CellObject>): (Array<CellObject>, ResultField) => ?string {
+  const colMap = new Map<ResultField, ?number>();
+  for (const [field, cols] of config.cols) {
+    const idx = headerRow.findIndex(cell => cell != null && cols.includes(cell.v));
+    if (idx != -1) colMap.set(field, idx);
+  }
+  return function (row: Array<CellObject>, field: ResultField): ?string {
+    const idx = colMap.get(field);
+    return (idx == null) ? null : `${row[idx].v}`;
+  };
+}
+
 function parseSheet(sheetName: string, sheet: Array<Array<CellObject>>): ParseOutput {
   const config = SHEET_CONFIGS.get(sheetName);
-  const results: Array<Result> = [];
+  let results: Array<Result> = [];
   const log: Array<string> = [];
   if (config == null) {
     return {error: `Missing config for sheet name '${sheetName}'`, results, log};
   }
   if (sheet.length <= 1) return {results, log, error: null};
 
-  const f = getFields(sheetName, config, sheet[0]);
-  results.push(...sheet.slice(1).map(row => {
+  const headerRow = sheet[0];
+  const f = getFields(sheetName, config, headerRow);
+  results = sheet.slice(1).map(row => {
     let firstName = f(row, ResultField.FIRST_NAME) ?? "No name";
     let lastName = f(row, ResultField.LAST_NAME) ?? "No name";
     let mark: ?string = f(row, ResultField.MARK);
+    const resultMap: Map<ResultField, string> = new Map();
     if (mark == null) {
-      if (sheet[0].includes(EMPTY_COL)) {
-        const emptyIdx = sheet[0].findIndex(cell => cell == EMPTY_COL);
-        if (emptyIdx != -1) {
-          mark = row[emptyIdx].v;
-        } else {
-          log.push(`In the '${sheetName}' tab, ignoring row AAAA: ${JSON.stringify(row)}`);
-          return null;
-        }
-      } else {
-        log.push(`In the '${sheetName}' tab, ignoring row BBBB: ${JSON.stringify(row)}`);
+      // Attempts to find mark in an empty column
+      if (!headerRow.includes(EMPTY_COL)) {
+        log.push(`In the '${sheetName}' tab, ignoring row: ${JSON.stringify(row)}`);
         return null;
       }
+      const emptyIdx = sheet[0].findIndex(cell => cell == EMPTY_COL);
+      if (emptyIdx == -1) {
+        log.push(`In the '${sheetName}' tab, ignoring row: ${JSON.stringify(row)}`);
+        return null;
+      }
+      mark = `${row[emptyIdx].v}`;
     }
     return new Result(
       firstName,
@@ -125,7 +131,7 @@ function parseSheet(sheetName: string, sheet: Array<Array<CellObject>>): ParseOu
       config.event,
       mark,
     );
-  }).filter(r => r != null));
+  }).filter(r => r != null);
   return {results, error: null, log};
 }
 

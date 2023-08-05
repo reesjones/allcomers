@@ -111,10 +111,10 @@ export function CompiledPane(props: {results: Array<Result>}): React$Element<any
     .filter(new NMFilter())
     .transform(new AddUnattachedIfEmptyTeamTransformer())
     .build();
-  console.log(props.results);
+  // console.log(props.results);
   const transformedResults = pipe.run(props.results);
-  console.log(props.results);
-  console.log(transformedResults);
+  // console.log(props.results);
+  // console.log(transformedResults);
 
   const fields = [...getAllFields(transformedResults)];
   const headerRow = fields.map(field => 

@@ -1,5 +1,7 @@
 // @flow
 
+import {str} from "./util";
+
 export enum Event {
   // Track events (TODO complete the list)
   E100,
@@ -28,11 +30,6 @@ export enum Event {
   E4x400,
 };
 
-export enum RankDirection {
-  ASCENDING,
-  DESCENDING,
-};
-
 export enum ResultField {
   GENDER,
   FIRST_NAME,
@@ -43,6 +40,11 @@ export enum ResultField {
   LANE,
   EVENT,
   MARK,
+};
+
+export enum RankDirection {
+  ASCENDING,
+  DESCENDING,
 };
 
 export const EMPTY_COL = "__EMPTY";
@@ -74,11 +76,14 @@ export class Result {
   }
 
   key(): string {
-    return `${(this.event: string)}-${this.lastName}-${this.firstName}`;
+    return `${str(this.event)}-${this.lastName}-${this.firstName}`;
   }
 
-  // Returns the value of the field representing a number score which defines
-  // the total ordering of rank. Null indicates no score (DNS, DNF, NM, NH, etc.)
+  /**
+   * Returns the value of the field representing a number score which defines
+   * the total ordering of rank. Null indicates unparsable score - ill-formatted
+   * or DNS/DNF/NH/NM/etc.
+   */
   getScore(): ?number {
     throw new Error("Result is an abstract class");
   }
@@ -88,7 +93,7 @@ export class Result {
     return new Map([
       [ResultField.FIRST_NAME, this.firstName],
       [ResultField.LAST_NAME, this.lastName],
-      [ResultField.EVENT, (this.event: string)],
+      [ResultField.EVENT, str(this.event)],
       [ResultField.MARK, this.mark],
     ]);
   }

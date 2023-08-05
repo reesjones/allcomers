@@ -43,3 +43,11 @@ export function fillEmpty<T>(arr: Array<T>, filler: () => T, paddedSize?: number
   }
   return arr;
 }
+
+/**
+ * VSCode syntax highlighting breaks past instances of casting enums to strings.
+ * Get around it by putting casting function at the bottom of utils
+ */
+export function str(f: any): string {
+  return (f: string);
+}
