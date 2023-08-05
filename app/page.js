@@ -7,7 +7,8 @@ import {Workbook} from 'xlsx';
 import {ResultParser, GoogleSheetsResultParser} from './parser';
 import {Result, ResultField} from './types';
 import {Pipeline} from './pipeline/core';
-import {NoNameFilter} from './pipeline/filters';
+import {DNFFilter, DNSFilter, NHFilter, NMFilter, NoNameFilter} from './pipeline/filters';
+import {AddUnattachedIfEmptyTeamTransformer} from './pipeline/transformers';
 import {fillEmpty, emptyRow, emptyCell} from './util';
 import {ReactGrid, CellChange, Column, Row, TextCell} from "@silevis/reactgrid";
 import "@silevis/reactgrid/styles.css";
@@ -101,11 +102,19 @@ function resultToRow(result: Result, fields: Array<ResultField>): Array<string> 
   return fields.map(f => fieldValues.get(f) ?? "");
 }
 
-export function CompiledSheet(props: {results: Array<Result>}): React$Element<any> {
+export function CompiledPane(props: {results: Array<Result>}): React$Element<any> {
   const pipe = new PipelineBuilder()
     .filter(new NoNameFilter())
+    .filter(new DNFFilter())
+    .filter(new DNSFilter())
+    .filter(new NHFilter())
+    .filter(new NMFilter())
+    .transform(new AddUnattachedIfEmptyTeamTransformer())
     .build();
+  console.log(props.results);
   const transformedResults = pipe.run(props.results);
+  console.log(props.results);
+  console.log(transformedResults);
 
   const fields = [...getAllFields(transformedResults)];
   const headerRow = fields.map(field => 
@@ -117,7 +126,11 @@ export function CompiledSheet(props: {results: Array<Result>}): React$Element<an
   const aoa = XLSX.utils.aoa_to_sheet(rows, {dense: true});
   const aoaWorkbook = XLSX.utils.book_new();
   XLSX.utils.book_append_sheet(aoaWorkbook, aoa, "Compiled");
-  return <ResultWorkbook initialWorkbook={aoaWorkbook} />;
+  return (
+    <div>
+      <ResultWorkbook initialWorkbook={aoaWorkbook} />
+    </div>
+  );
 }
 
 const EXCLUDE_SHEETS = ["Worksheet", "Final Compiled", "Instructions"];
@@ -171,7 +184,7 @@ export default function Home(): React$Element<any> {
     if (parseOutput.error) {
       compiledPane = <div>Error parsing input sheet: {parseOutput.error}</div>;
     } else {
-      compiledPane = <CompiledSheet results={parsedResults} />;
+      compiledPane = <CompiledPane results={parsedResults} />;
     }
   }
   return (

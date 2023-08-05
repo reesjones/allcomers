@@ -3,8 +3,11 @@ import {assert} from '../util'
 import {Event, Result, RankDirection} from '../types'
 
 export class Filter {
-  belongs(input: Result): boolean {
+  shouldRemove(input: Result): boolean {
     throw new Error("Filter is an abstract class");
+  }
+  belongs(input: Result): boolean {
+    return !this.shouldRemove(input);
   }
 }
 

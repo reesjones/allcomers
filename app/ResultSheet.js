@@ -111,7 +111,7 @@ export function ResultWorkbookStateless(props: ResultWorkbookStatelessProps): Re
     <div>
       <Tabs size="sm" defaultValue={workbook.SheetNames[0]}>
         {tabs}
-        <TabList variant="soft" color="primary" tabFlex="auto">
+        <TabList variant="soft" color="primary">
           {workbook.SheetNames.map(name => <Tab value={name} key={name}>{name}</Tab>)}
         </TabList>
       </Tabs>
