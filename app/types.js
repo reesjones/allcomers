@@ -1,4 +1,5 @@
 // @flow
+import { Scorables } from "./pipeline/scores";
 import {str} from "./util";
 
 export enum Event {
@@ -15,6 +16,7 @@ export enum Event {
   E5000,
   E10000,
   ERaceWalk,
+  E80Hurdles,
   E100Hurdles,
   E110Hurdles,
   E300Hurdles,
@@ -46,6 +48,7 @@ export enum ResultField {
   EVENT,
   MARK,
   PREDICTED_TIME,
+  HURDLE_HEIGHT,
 };
 
 export enum RankDirection {
@@ -114,7 +117,7 @@ export class ThrowResult extends Result {
   implementWeightUnit: WeightUnit;
   constructor(firstName: string, lastName: string, event: Event, mark: string,
     implementWeight: number, implementWeightUnit: WeightUnit) {
-    super(firstName, lastName, event, mark);
+    super(Scorables.Distance, firstName, lastName, event, mark);
     this.implementWeight = implementWeight;
     this.implementWeightUnit = implementWeightUnit;
   }

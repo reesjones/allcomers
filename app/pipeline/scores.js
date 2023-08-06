@@ -98,3 +98,10 @@ export class ImperialLengthScorable implements Scorable {
     }
   }
 }
+
+export class Scorables {
+  static Time: TimeScorable = new TimeScorable();
+  static Distance: DistanceScorable = new DistanceScorable();
+  static JoggersMile: JoggersMileScorable = new JoggersMileScorable();
+  static ImperialLength: ImperialLengthScorable = new ImperialLengthScorable();
+}

@@ -5,6 +5,7 @@ import {
   DistanceScorable,
   ImperialLengthScorable,
   JoggersMileScorable,
+  Scorables,
   TimeScorable,
 } from "./pipeline/scores";
 
@@ -30,8 +31,31 @@ export class ResultParser<TInput> {
 }
 
 type SheetConfig = {
-  event: Event,
+  getEvent: (Map<ResultField, string>) => ?Event,
   cols: Map<ResultField, Array<string>>,
+};
+
+function EVENT(e: Event): (Map<ResultField, string>) => ?Event {
+  return (_: Map<ResultField, string>) => e;
+}
+
+function getEventForHurdlesTab(fields: Map<ResultField, string>): ?Event {
+  const hurdleHeight = fields.get(ResultField.HURDLE_HEIGHT);
+  if (hurdleHeight == null) {
+    console.log("Couldn't determine hurdle event from row: ", fields);
+    return null;
+  }
+
+  if (hurdleHeight.includes("100m")) {
+    return Event.E100Hurdles;
+  } else if (hurdleHeight.includes("110HH")) {
+    return Event.E110Hurdles;
+  } else if (hurdleHeight.includes("80m")) {
+    return Event.E80Hurdles;
+  } else {
+    console.log("Couldn't determine hurdle event from row: ", fields);
+    return null;
+  }
 };
 
 /**
@@ -52,6 +76,19 @@ const DEFAULT_COLS: Map<ResultField, Array<string>> = new Map<ResultField, Array
   [ResultField.LANE, ["Lane"]],
   [ResultField.MARK, ["Results", "Result"]],
 ]);
+
+const HURDLES_COLS: Map<ResultField, Array<string>> = new Map<ResultField, Array<string>>([
+  [ResultField.AGE, ["Age"]],
+  [ResultField.FIRST_NAME, ["First Name"]],
+  [ResultField.LAST_NAME, ["Last Name"]],
+  [ResultField.TEAM, ["Club/Team"]],
+  [ResultField.GENDER, ["Gender"]],
+  [ResultField.HEAT, ["Heat"]],
+  [ResultField.LANE, ["Lane"]],
+  [ResultField.MARK, ["Results", "Result"]],
+  [ResultField.HURDLE_HEIGHT, ["Hurdle Height: Inches", "Event Hurdle Height: Inches"]],
+]);
+
 const JOGGERS_MILE_COLS: Map<ResultField, Array<string>> = new Map<ResultField, Array<string>>([
   [ResultField.AGE, ["Age"]],
   [ResultField.FIRST_NAME, ["First Name"]],
@@ -74,28 +111,29 @@ const RELAY_COLS: Map<ResultField, Array<string>> = new Map<ResultField, Array<s
   [ResultField.LANE, ["Lane"]],
   [ResultField.MARK, ["Results", "Result"]],
 ]);
+
 const SHEET_CONFIGS: Map<string, SheetConfig> = new Map([
-  ["100m", {event: Event.E100, cols: DEFAULT_COLS}],
-  ["200m", {event: Event.E200, cols: DEFAULT_COLS}],
-  ["400m", {event: Event.E400, cols: DEFAULT_COLS}],
-  ["800m", {event: Event.E800, cols: DEFAULT_COLS}],
-  ["1500m", {event: Event.E1500, cols: DEFAULT_COLS}],
-  ["Mile", {event: Event.EMile, cols: DEFAULT_COLS}],
-  ["Joggers Mile", {event: Event.EJoggersMile, cols: JOGGERS_MILE_COLS}],
-  ["3000", {event: Event.E3000, cols: DEFAULT_COLS}],
-  ["2 Mile", {event: Event.E2Mile, cols: DEFAULT_COLS}],
-  ["5000m", {event: Event.E5000, cols: DEFAULT_COLS}],
-  ["Triple Jump", {event: Event.ETripleJump, cols: DEFAULT_COLS}],
-  ["Long Jump", {event: Event.ELongJump, cols: DEFAULT_COLS}],
-  ["High Jump", {event: Event.EHighJump, cols: DEFAULT_COLS}],
-  ["Pole Vault", {event: Event.EPoleVault, cols: DEFAULT_COLS}],
-  ["Javelin", {event: Event.EJavelin, cols: DEFAULT_COLS}],
-  ["Shot Put", {event: Event.EShotput, cols: DEFAULT_COLS}],
-  ["Discus", {event: Event.EDiscus, cols: DEFAULT_COLS}],
-  ["Hurdles", {event: Event.EHurdles, cols: DEFAULT_COLS}],
-  ["4x100m", {event: Event.E4x100, cols: RELAY_COLS}],
-  ["4x200m", {event: Event.E4x200, cols: RELAY_COLS}],
-  ["4x400m", {event: Event.E4x400, cols: RELAY_COLS}],
+  ["100m", {getEvent: EVENT(Event.E100), cols: DEFAULT_COLS}],
+  ["200m", {getEvent: EVENT(Event.E200), cols: DEFAULT_COLS}],
+  ["400m", {getEvent: EVENT(Event.E400), cols: DEFAULT_COLS}],
+  ["800m", {getEvent: EVENT(Event.E800), cols: DEFAULT_COLS}],
+  ["1500m", {getEvent: EVENT(Event.E1500), cols: DEFAULT_COLS}],
+  ["Mile", {getEvent: EVENT(Event.EMile), cols: DEFAULT_COLS}],
+  ["Joggers Mile", {getEvent: EVENT(Event.EJoggersMile), cols: JOGGERS_MILE_COLS}],
+  ["3000", {getEvent: EVENT(Event.E3000), cols: DEFAULT_COLS}],
+  ["2 Mile", {getEvent: EVENT(Event.E2Mile), cols: DEFAULT_COLS}],
+  ["5000m", {getEvent: EVENT(Event.E5000), cols: DEFAULT_COLS}],
+  ["Triple Jump", {getEvent: EVENT(Event.ETripleJump), cols: DEFAULT_COLS}],
+  ["Long Jump", {getEvent: EVENT(Event.ELongJump), cols: DEFAULT_COLS}],
+  ["High Jump", {getEvent: EVENT(Event.EHighJump), cols: DEFAULT_COLS}],
+  ["Pole Vault", {getEvent: EVENT(Event.EPoleVault), cols: DEFAULT_COLS}],
+  ["Javelin", {getEvent: EVENT(Event.EJavelin), cols: DEFAULT_COLS}],
+  ["Shot Put", {getEvent: EVENT(Event.EShotput), cols: DEFAULT_COLS}],
+  ["Discus", {getEvent: EVENT(Event.EDiscus), cols: DEFAULT_COLS}],
+  ["Hurdles", {getEvent: getEventForHurdlesTab, cols: HURDLES_COLS}],
+  ["4x100m", {getEvent: EVENT(Event.E4x100), cols: RELAY_COLS}],
+  ["4x200m", {getEvent: EVENT(Event.E4x200), cols: RELAY_COLS}],
+  ["4x400m", {getEvent: EVENT(Event.E4x400), cols: RELAY_COLS}],
 ]);
 
 /**
@@ -127,6 +165,7 @@ function getScorableForEvent(event: Event): Scorable {
     case Event.E5000:
     case Event.E10000:
     case Event.ERaceWalk:
+    case Event.E80Hurdles:
     case Event.E100Hurdles:
     case Event.E110Hurdles:
     case Event.E300Hurdles:
@@ -136,18 +175,21 @@ function getScorableForEvent(event: Event): Scorable {
     case Event.E4x400:
     case Event.EDMR:
     case Event.ESMR:
-      return new TimeScorable();
+      return Scorables.Time;
+
     case Event.ELongJump:
     case Event.EHighJump:
     case Event.ETripleJump:
     case Event.EShotput:
     case Event.EJavelin:
     case Event.EDiscus:
-      return new DistanceScorable();
+      return Scorables.Distance;
+
     case Event.EPoleVault:
-      return new ImperialLengthScorable();
+      return Scorables.ImperialLength;
+
     case Event.EJoggersMile:
-      return new JoggersMileScorable();
+      return Scorables.JoggersMile;
   }
 }
 
@@ -180,11 +222,17 @@ function parseSheet(sheetName: string, sheet: Array<Array<CellObject>>): ParseOu
       }
       mark = `${row[emptyIdx].v}`;
     }
+    const fields: Map<ResultField, string> = new Map();
+    if (sheetName == "Hurdles") {
+      fields.set(ResultField.HURDLE_HEIGHT, f(row, ResultField.HURDLE_HEIGHT) ?? "");
+    }
+    const event = config.getEvent(fields);
+    if (event == null) return null;
     return new Result(
-      getScorableForEvent(config.event),
+      getScorableForEvent(event),
       firstName,
       lastName,
-      config.event,
+      event,
       mark,
     );
   }).filter(r => r != null);
