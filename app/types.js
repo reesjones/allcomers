@@ -39,6 +39,7 @@ export enum ResultField {
   LANE,
   EVENT,
   MARK,
+  PREDICTED_TIME,
 };
 
 export enum RankDirection {

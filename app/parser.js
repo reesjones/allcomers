@@ -47,6 +47,16 @@ const DEFAULT_COLS: Map<ResultField, Array<string>> = new Map<ResultField, Array
   [ResultField.LANE, ["Lane"]],
   [ResultField.MARK, ["Results", "Result"]],
 ]);
+const JOGGERS_MILE_COLS: Map<ResultField, Array<string>> = new Map<ResultField, Array<string>>([
+  [ResultField.AGE, ["Age"]],
+  [ResultField.FIRST_NAME, ["First Name"]],
+  [ResultField.LAST_NAME, ["Last Name"]],
+  [ResultField.TEAM, ["Club/Team"]],
+  [ResultField.GENDER, ["Gender"]],
+  [ResultField.HEAT, ["Heat"]],
+  [ResultField.LANE, ["Lane"]],
+  [ResultField.MARK, ["Time", "Results", "Result"]],
+]);
 
 const IgnoreThisField: Array<string> = [""].filter(s => false);
 const RELAY_COLS: Map<ResultField, Array<string>> = new Map<ResultField, Array<string>>([
@@ -66,7 +76,7 @@ const SHEET_CONFIGS: Map<string, SheetConfig> = new Map([
   ["800m", {event: Event.E800, cols: DEFAULT_COLS}],
   ["1500m", {event: Event.E1500, cols: DEFAULT_COLS}],
   ["Mile", {event: Event.EMile, cols: DEFAULT_COLS}],
-  ["Joggers Mile", {event: Event.EJoggersMile, cols: DEFAULT_COLS}],
+  ["Joggers Mile", {event: Event.EJoggersMile, cols: JOGGERS_MILE_COLS}],
   ["3000", {event: Event.E3000, cols: DEFAULT_COLS}],
   ["2 Mile", {event: Event.E2Mile, cols: DEFAULT_COLS}],
   ["5000m", {event: Event.E5000, cols: DEFAULT_COLS}],
@@ -100,7 +110,7 @@ function getFields(name: string, config: SheetConfig, headerRow: Array<CellObjec
 }
 
 function getScorableForEvent(event: Event): Scorable {
-  // TODO implement
+  // TODO fill out once event enum is complete
   switch (event) {
     default:
       return new NullScorable();
