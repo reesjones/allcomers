@@ -2,7 +2,7 @@
 import {str} from "./util";
 
 export enum Event {
-  // Track events (TODO complete the list)
+  // Individual track events
   E100,
   E200,
   E400,
@@ -14,8 +14,12 @@ export enum Event {
   E2Mile,
   E5000,
   E10000,
-  EHurdles,
-  // Field events (TODO complete the list)
+  ERaceWalk,
+  E100Hurdles,
+  E110Hurdles,
+  E300Hurdles,
+  E400Hurdles,
+  // Field events
   EPoleVault,
   ELongJump,
   EHighJump,
@@ -23,10 +27,12 @@ export enum Event {
   EShotput,
   EJavelin,
   EDiscus,
-  // Relays (TODO complete the list)
+  // Relays
   E4x100,
   E4x200,
   E4x400,
+  EDMR,
+  ESMR,
 };
 
 export enum ResultField {

@@ -98,13 +98,3 @@ export class ImperialLengthScorable implements Scorable {
     }
   }
 }
-
-/**
- * Always returns null score. Used as a placeholder
- * @nocommit REMOVE AND REPLACE WITH ABOVE
- */
-export class NullScorable implements Scorable {
-  score(_: string): ?number {
-    return null;
-  }
-}

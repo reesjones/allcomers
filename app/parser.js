@@ -1,7 +1,12 @@
 // @flow
 'use client'
 import type { Scorable } from "./types";
-import { NullScorable } from "./pipeline/scores";
+import {
+  DistanceScorable,
+  ImperialLengthScorable,
+  JoggersMileScorable,
+  TimeScorable,
+} from "./pipeline/scores";
 
 import {
   Event,
@@ -110,10 +115,39 @@ function getFields(name: string, config: SheetConfig, headerRow: Array<CellObjec
 }
 
 function getScorableForEvent(event: Event): Scorable {
-  // TODO fill out once event enum is complete
   switch (event) {
-    default:
-      return new NullScorable();
+    case Event.E100:
+    case Event.E200:
+    case Event.E400:
+    case Event.E800:
+    case Event.E1500:
+    case Event.EMile:
+    case Event.E3000:
+    case Event.E2Mile:
+    case Event.E5000:
+    case Event.E10000:
+    case Event.ERaceWalk:
+    case Event.E100Hurdles:
+    case Event.E110Hurdles:
+    case Event.E300Hurdles:
+    case Event.E400Hurdles:
+    case Event.E4x100:
+    case Event.E4x200:
+    case Event.E4x400:
+    case Event.EDMR:
+    case Event.ESMR:
+      return new TimeScorable();
+    case Event.ELongJump:
+    case Event.EHighJump:
+    case Event.ETripleJump:
+    case Event.EShotput:
+    case Event.EJavelin:
+    case Event.EDiscus:
+      return new DistanceScorable();
+    case Event.EPoleVault:
+      return new ImperialLengthScorable();
+    case Event.EJoggersMile:
+      return new JoggersMileScorable();
   }
 }
 
