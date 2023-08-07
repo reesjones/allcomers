@@ -195,8 +195,11 @@ function getScorableForEvent(event: Event): Scorable {
   }
 }
 
-function resultNotNull(r: ?Result) {
-  return r != null;
+function findFirstEmptyCell(row: Array<CellObject_t>) {
+  for (let i = 0; i < row.length; i++) {
+    if (row[i].v.length == 0) return i;
+  }
+  return -1;
 }
 
 /**
@@ -218,30 +221,25 @@ function *genResults(
     const resultMap: Map<ResultField, string> = new Map();
     if (mark == null) {
       // Attempts to find mark in an empty column
-      if (!headerRow.includes(EMPTY_COL)) {
-        log(`In the '${sheetName}' tab, ignoring row: ${JSON.stringify(row)}`);
-        continue;
-      }
-      const emptyIdx = sheet[0].findIndex(cell => cell.v == '');
-      if (emptyIdx == -1) {
+      const emptyIdx = findFirstEmptyCell(headerRow);
+      if (emptyIdx === -1) {
         log(`In the '${sheetName}' tab, ignoring row: ${JSON.stringify(row)}`);
         continue;
       }
       mark = `${row[emptyIdx].v}`;
     }
     const fields: Map<ResultField, string> = new Map();
+    fields.set(ResultField.FIRST_NAME, f(row, ResultField.FIRST_NAME) ?? "");
+    fields.set(ResultField.LAST_NAME, f(row, ResultField.LAST_NAME) ?? "");
+    fields.set(ResultField.MARK, mark);
+
     if (sheetName == "Hurdles") {
       fields.set(ResultField.HURDLE_HEIGHT, f(row, ResultField.HURDLE_HEIGHT) ?? "");
     }
+
     const event = config.getEvent(fields);
     if (event == null) continue;
-    yield new Result(
-      getScorableForEvent(event),
-      firstName,
-      lastName,
-      event,
-      mark,
-    );
+    yield new Result(getScorableForEvent(event), event, fields);
   }
 }
 
