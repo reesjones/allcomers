@@ -1,5 +1,7 @@
 // @flow
 'use client'
+
+import type { CellObject_t, Workbook_t} from './xlsx_types';
 import type { Scorable } from "./types";
 import {
   DistanceScorable,
@@ -140,15 +142,15 @@ const SHEET_CONFIGS: Map<string, SheetConfig> = new Map([
  * Returns function which maps ResultField to matching cell value in a row, based
  * on the header row passed in
  */
-function getFields(name: string, config: SheetConfig, headerRow: Array<CellObject>): (Array<CellObject>, ResultField) => ?string {
+function getFields(name: string, config: SheetConfig, headerRow: Array<CellObject_t>): (Array<CellObject_t>, ResultField) => ?string {
   const colMap = new Map<ResultField, ?number>();
   for (const [field, cols] of config.cols) {
     const idx = headerRow.findIndex(cell => cell != null && cols.includes(cell.v));
     if (idx != -1) colMap.set(field, idx);
   }
-  return function (row: Array<CellObject>, field: ResultField): ?string {
+  return function (row: Array<CellObject_t>, field: ResultField): ?string {
     const idx = colMap.get(field);
-    return (idx == null) ? null : `${row[idx].v}`;
+    return (idx == null) ? null : `${row[idx].v ?? ""}`;
   };
 }
 
@@ -193,7 +195,57 @@ function getScorableForEvent(event: Event): Scorable {
   }
 }
 
-function parseSheet(sheetName: string, sheet: Array<Array<CellObject>>): ParseOutput {
+function resultNotNull(r: ?Result) {
+  return r != null;
+}
+
+/**
+ * Yields results, returns array of log lines
+ */
+function *genResults(
+  sheetName: string,
+  config: SheetConfig,
+  sheet: Array<Array<CellObject_t>>,
+  resultRows: Array<Array<CellObject_t>>,
+  log: (msg: string) => void,
+): Iterator<Result> {
+  const headerRow = sheet[0];
+  const f = getFields(sheetName, config, headerRow);
+  for (const row of resultRows) {
+    let firstName = f(row, ResultField.FIRST_NAME) ?? "No name";
+    let lastName = f(row, ResultField.LAST_NAME) ?? "No name";
+    let mark: ?string = f(row, ResultField.MARK);
+    const resultMap: Map<ResultField, string> = new Map();
+    if (mark == null) {
+      // Attempts to find mark in an empty column
+      if (!headerRow.includes(EMPTY_COL)) {
+        log(`In the '${sheetName}' tab, ignoring row: ${JSON.stringify(row)}`);
+        continue;
+      }
+      const emptyIdx = sheet[0].findIndex(cell => cell.v == '');
+      if (emptyIdx == -1) {
+        log(`In the '${sheetName}' tab, ignoring row: ${JSON.stringify(row)}`);
+        continue;
+      }
+      mark = `${row[emptyIdx].v}`;
+    }
+    const fields: Map<ResultField, string> = new Map();
+    if (sheetName == "Hurdles") {
+      fields.set(ResultField.HURDLE_HEIGHT, f(row, ResultField.HURDLE_HEIGHT) ?? "");
+    }
+    const event = config.getEvent(fields);
+    if (event == null) continue;
+    yield new Result(
+      getScorableForEvent(event),
+      firstName,
+      lastName,
+      event,
+      mark,
+    );
+  }
+}
+
+function parseSheet(sheetName: string, sheet: Array<Array<CellObject_t>>): ParseOutput {
   const config = SHEET_CONFIGS.get(sheetName);
   let results: Array<Result> = [];
   const log: Array<string> = [];
@@ -204,43 +256,14 @@ function parseSheet(sheetName: string, sheet: Array<Array<CellObject>>): ParseOu
 
   const headerRow = sheet[0];
   const f = getFields(sheetName, config, headerRow);
-  results = sheet.slice(1).map(row => {
-    let firstName = f(row, ResultField.FIRST_NAME) ?? "No name";
-    let lastName = f(row, ResultField.LAST_NAME) ?? "No name";
-    let mark: ?string = f(row, ResultField.MARK);
-    const resultMap: Map<ResultField, string> = new Map();
-    if (mark == null) {
-      // Attempts to find mark in an empty column
-      if (!headerRow.includes(EMPTY_COL)) {
-        log.push(`In the '${sheetName}' tab, ignoring row: ${JSON.stringify(row)}`);
-        return null;
-      }
-      const emptyIdx = sheet[0].findIndex(cell => cell == EMPTY_COL);
-      if (emptyIdx == -1) {
-        log.push(`In the '${sheetName}' tab, ignoring row: ${JSON.stringify(row)}`);
-        return null;
-      }
-      mark = `${row[emptyIdx].v}`;
-    }
-    const fields: Map<ResultField, string> = new Map();
-    if (sheetName == "Hurdles") {
-      fields.set(ResultField.HURDLE_HEIGHT, f(row, ResultField.HURDLE_HEIGHT) ?? "");
-    }
-    const event = config.getEvent(fields);
-    if (event == null) return null;
-    return new Result(
-      getScorableForEvent(event),
-      firstName,
-      lastName,
-      event,
-      mark,
-    );
-  }).filter(r => r != null);
+  const resultRows: Array<Array<CellObject_t>> = sheet.slice(1);
+  results = Array.from(genResults(
+    sheetName, config, sheet, resultRows, (msg: string) => {log.push(msg);}));
   return {results, error: null, log};
 }
 
-export class GoogleSheetsResultParser extends ResultParser<Workbook> {
-  parse(input: Workbook): ParseOutput {
+export class GoogleSheetsResultParser extends ResultParser<Workbook_t> {
+  parse(input: Workbook_t): ParseOutput {
     let results: Array<Result> = [];
     let log: Array<string> = [];
     const sheetNames = input.SheetNames;

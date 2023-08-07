@@ -22,6 +22,9 @@ import Sheet from '@mui/joy/Sheet';
 import { applyCellChanges, ResultWorkbook, ResultWorkbookStateless } from './ResultSheet';
 import PipelineBuilder from './pipeline/builder';
 
+import type { CellObject_t, Workbook_t, Worksheet_t } from './xlsx_types';
+import type { CellChange_t, TextCell_t } from './reactgrid_types'
+
 const HDR_ROW = {
   rowId: "header",
   cells: [
@@ -52,33 +55,6 @@ function getRows(results: Array<Result>) {
   ];
 }
 
-
-export function ResultSheet(props: {
-  sheet: WorkSheet,
-  onCellsChanged: (Array<CellChange<TextCell>>) => void,
-}): React$Element<any> {
-  const rows = props.sheet.map((row, i) => {
-    let cells = row.map(cell => {
-      let type = i == 0 ? "header" : "text";
-      if (cell == null) type = "number";
-      return {type, text: `${cell.v}`};
-    });
-    return {rowId: i, cells};
-  });
-  const headerRow = {
-    rowId: "header",
-    cells: rows[0],
-  };
-  const maxColWidth = rows.reduce((max, next) =>
-    (next.cells.length > max) ? next.cells.length : max, 0);
-  const cols = [];
-  for (let i = 0; i < maxColWidth; i++) {
-    cols.push({columnId: i, width: 150});
-  }
-  return (
-    <ReactGrid rows={rows} columns={cols} onCellsChanged={props.onCellsChanged}/>
-  );
-}
 
 function getAllFields(results: Array<Result>): Set<ResultField> {
   const headers = new Set<ResultField>();
@@ -111,10 +87,7 @@ export function CompiledPane(props: {results: Array<Result>}): React$Element<any
     .filter(new NMFilter())
     .transform(new AddUnattachedIfEmptyTeamTransformer())
     .build();
-  // console.log(props.results);
   const transformedResults = pipe.run(props.results);
-  // console.log(props.results);
-  // console.log(transformedResults);
 
   const fields = [...getAllFields(transformedResults)];
   const headerRow = fields.map(field => 
@@ -134,7 +107,7 @@ export function CompiledPane(props: {results: Array<Result>}): React$Element<any
 }
 
 const EXCLUDE_SHEETS = ["Worksheet", "Final Compiled", "Instructions"];
-function filterSheets(workbook: Workbook, excludeList: Array<string>): Workbook {
+function filterSheets(workbook: Workbook_t, excludeList: Array<string>): Workbook_t {
   workbook.SheetNames = workbook.SheetNames.filter(n => !EXCLUDE_SHEETS.includes(n));
   for (const excluded of EXCLUDE_SHEETS) {
     delete workbook.Sheets[excluded];
@@ -148,8 +121,7 @@ enum SelectedTab {
 };
 
 export default function Home(): React$Element<any> {
-  // TODO Get xlsx flow types
-  const [workbook, setWorkbook] = useState<any/*Workbook*/>(null);
+  const [workbook, setWorkbook] = useState<?Workbook_t>(null);
   const [selectedTab, setSelectedTab] = useState<SelectedTab>(SelectedTab.ORIGINAL);
   const [originalWorkbookVersion, setOriginalWorkbookVersion] = useState(0);
 
@@ -201,7 +173,7 @@ export default function Home(): React$Element<any> {
           <div style={originalTabStyle}>
             <ResultWorkbookStateless
               workbook={workbook}
-              onCellsChanged={(changedSheetName: string, changes: Array<CellChange<TextCell>>) => {
+              onCellsChanged={(changedSheetName: string, changes: Array<CellChange<TextCell_t>>) => {
                 setWorkbook(prevWorkbook => applyCellChanges(changedSheetName, changes, prevWorkbook))
                 setOriginalWorkbookVersion(ver => ver + 1);
               }} />

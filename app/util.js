@@ -1,5 +1,5 @@
 // @flow
-import type {CellObject} from './types';
+import type {CellObject_t} from './xlsx_types';
 
 export function assert(
   condition: boolean,
@@ -9,12 +9,12 @@ export function assert(
 }
 
 // Allocates and returns new CellObject
-export function emptyCell(): CellObject {
-  return {'t': '', 'v': '', 'r': '', 'h': '', 'w': ''};
+export function emptyCell(): CellObject_t {
+  return {'t': 's', 'v': '', 'r': '', 'h': '', 'w': ''};
 }
 
 // Allocates and returns new row (array) of CellObjects with specified width
-export function emptyRow(width: number): () => Array<CellObject> {
+export function emptyRow(width: number): () => Array<CellObject_t> {
   const fn = () => {
     const arr = new Array<any>(width);
     for (let i = 0; i < arr.length; i++) {

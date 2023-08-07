@@ -122,13 +122,3 @@ export class ThrowResult extends Result {
     this.implementWeightUnit = implementWeightUnit;
   }
 }
-
-// Beginning of attempt to add type annotations for spreadsheet library
-// TODO - flesh out, fix flow typing in rest of project
-export type CellObject = {
-  't': string,
-  'v': string,
-  'r': string,
-  'h': string,
-  'w': string,
-};

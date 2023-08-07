@@ -10,11 +10,9 @@ import TabPanel from '@mui/joy/TabPanel';
 import TabList from '@mui/joy/TabList';
 import Tabs from '@mui/joy/Tabs';
 
-export type ResultSheetStatelessProps = {
-  sheet: Worksheet,
-  name: string,
-  onCellsChanged: (Array<CellChange<TextCell>>) => void,
-};
+import type {Workbook_t, Worksheet_t} from './xlsx_types'
+import type {TextCell_t, CellChange_t} from './reactgrid_types'
+import { assert } from './util';
 
 /**
  * Makes a deep copy of prevWorkbook, applies changes to changed sheet to the
@@ -22,9 +20,10 @@ export type ResultSheetStatelessProps = {
  */
 export function applyCellChanges(
   changedSheetName: string,
-  changes: Array<CellChange<TextCell>>,
-  prevWorkbook: Workbook,
-): Workbook {
+  changes: Array<CellChange_t<TextCell_t>>,
+  prevWorkbook: ?Workbook_t,
+): ?Workbook_t {
+  if (prevWorkbook == null) return prevWorkbook;
   const newWorkbook = XLSX.utils.book_new();
   const changedSheet = prevWorkbook.Sheets[changedSheetName];
   for (const nameToCopy of prevWorkbook.SheetNames) {
@@ -39,6 +38,12 @@ export function applyCellChanges(
     cell.r = `<t>${change.newCell.text}</t>`;
   }
   return newWorkbook;
+};
+
+export type ResultSheetStatelessProps = {
+  sheet: Worksheet_t,
+  name: string,
+  onCellsChanged: (Array<CellChange<TextCell_t>>) => void,
 };
 
 /**
@@ -76,8 +81,8 @@ function ResultSheetStateless(props: ResultSheetStatelessProps): React$Element<a
 };
 
 export type ResultWorkbookStatelessProps = {
-  workbook: ?Workbook,
-  onCellsChanged: (string, Array<CellChange<TextCell>>) => void,
+  workbook: ?Workbook_t,
+  onCellsChanged: (string, Array<CellChange<TextCell_t>>) => void,
 };
 
 /**
@@ -92,7 +97,7 @@ export function ResultWorkbookStateless(props: ResultWorkbookStatelessProps): Re
   }
   const tabs = workbook.SheetNames.map(name => {
     const sheet = workbook.Sheets[name];
-    const onCellsChanged = (changes: Array<CellChange<TextCell>>) => {
+    const onCellsChanged = (changes: Array<CellChange<TextCell_t>>) => {
       props.onCellsChanged(name, changes);
     };
     return (
@@ -122,7 +127,7 @@ export function ResultWorkbookStateless(props: ResultWorkbookStatelessProps): Re
 /**
  * Stateful version of ResultWorkbookStateless. Uses initialWorkbook
  */
-export function ResultWorkbook(props: {initialWorkbook: ?Workbook}): React$Element<any> {
+export function ResultWorkbook(props: {initialWorkbook: ?Workbook_t}): React$Element<any> {
   const [workbook, setWorkbook] = useState(props.initialWorkbook);
   if (props.initialWorkbook == null) {
     return <div>No workbook selected.</div>
@@ -130,7 +135,7 @@ export function ResultWorkbook(props: {initialWorkbook: ?Workbook}): React$Eleme
   return (
     <ResultWorkbookStateless
       workbook={workbook}
-      onCellsChanged={(changedSheetName: string, changes: Array<CellChange<TextCell>>) => {
+      onCellsChanged={(changedSheetName: string, changes: Array<CellChange<TextCell_t>>) => {
         setWorkbook(prevWorkbook => applyCellChanges(changedSheetName, changes, prevWorkbook))
       }} />
   );
