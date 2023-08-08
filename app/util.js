@@ -44,10 +44,17 @@ export function fillEmpty<T>(arr: Array<T>, filler: () => T, paddedSize?: number
   return arr;
 }
 
+export function camelize(str: string): string {
+  return str.replace(/(?:^\w|[A-Z]|\b\w|\s+)/g, function(match, index) {
+    if (+match === 0) return "";
+    return index === 0 ? match.toUpperCase() : match.toLowerCase();
+  });
+}
+
 /**
  * VSCode syntax highlighting breaks past instances of casting enums to strings.
- * Get around it by putting casting function at the bottom of utils
+ * Keep this at the bottom to avoid highlighting issues
  */
 export function str(f: any): string {
-  return (f: string);
+  return f == null  ? "" : (f: string);
 }

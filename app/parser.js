@@ -239,6 +239,7 @@ function *genResults(
     fields.set(ResultField.FIRST_NAME, f(row, ResultField.FIRST_NAME) ?? "");
     fields.set(ResultField.LAST_NAME, f(row, ResultField.LAST_NAME) ?? "");
     fields.set(ResultField.MARK, mark);
+    fields.set(ResultField.GENDER, f(row, ResultField.GENDER) ?? "");
 
     const norm = sheetName.toLowerCase().trim();
     if (norm == "hurdles") {

@@ -1,6 +1,6 @@
 // @flow
 import { ScoreBy } from "./pipeline/scores";
-import {str} from "./util";
+import {str, camelize} from "./util";
 
 export enum Event {
   // Individual track events
@@ -76,7 +76,6 @@ export interface Scorable {
  * {firstName, lastName, event} fields (TODO: this can break, should handle duplicate names)
  *
  * Fields to add
- *  - gender
  *  - division
  *  - wind
  *  - place
@@ -89,6 +88,7 @@ export class Result {
   firstName: string;
   lastName: string;
   mark: string;
+  gender: ?Gender;
 
   constructor(scorable: Scorable, event: Event, fields: Map<ResultField, string>) {
     this.scorable = scorable;
@@ -98,6 +98,16 @@ export class Result {
     this.firstName = Result._requireField(fields, ResultField.FIRST_NAME);
     this.lastName = Result._requireField(fields, ResultField.LAST_NAME);
     this.mark = Result._requireField(fields, ResultField.MARK);
+    const genderStr = Result._requireField(fields, ResultField.GENDER).trim().toLowerCase();
+    this.gender = null;
+    if (genderStr.includes("female") || genderStr.includes("girl") || genderStr.includes("women")) {
+      this.gender = Gender.FEMALE;
+    } else if (genderStr.includes("binary") || genderStr == "nb") {
+      this.gender = Gender.NONBINARY;
+    } else if (genderStr == "male" || genderStr == "men" || genderStr.includes("boy")) {
+      this.gender = Gender.MALE;
+    }
+    if (this.gender != null) this.fields.set(ResultField.GENDER, str(this.gender));
   }
 
   static _requireField(fieldMap: Map<ResultField, string>, field: ResultField): string {
@@ -211,8 +221,8 @@ export class CompiledResult {
     return "Event";
   }
 
-  getGender(): Gender {
-    throw new Error("Unimplemented");
+  getGender(): string {
+    return camelize(str(this.result.gender ?? ""));
   }
 
   getDivision(): string {

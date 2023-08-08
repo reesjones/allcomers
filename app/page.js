@@ -9,7 +9,7 @@ import {Result, ResultField} from './types';
 import {Pipeline} from './pipeline/core';
 import {DNFFilter, DNSFilter, NHFilter, NMFilter, NoNameFilter} from './pipeline/filters';
 import {AddUnattachedIfEmptyTeamTransformer} from './pipeline/transformers';
-import {fillEmpty, emptyRow, emptyCell} from './util';
+import {fillEmpty, emptyRow, emptyCell, camelize} from './util';
 import {ReactGrid, CellChange, Column, Row, TextCell} from "@silevis/reactgrid";
 import "@silevis/reactgrid/styles.css";
 import Button from '@mui/joy/Button';
@@ -64,13 +64,6 @@ function getAllFields(results: Array<Result>): Set<ResultField> {
     }
   }
   return headers;
-}
-
-function camelize(str: string): string {
-  return str.replace(/(?:^\w|[A-Z]|\b\w|\s+)/g, function(match, index) {
-    if (+match === 0) return "";
-    return index === 0 ? match.toUpperCase() : match.toLowerCase();
-  });
 }
 
 function resultToRow(result: Result, fields: Array<ResultField>): Array<string> {
