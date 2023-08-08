@@ -54,6 +54,12 @@ export enum ResultField {
   IMPLEMENT_WEIGHT_UNIT,
 };
 
+export enum Gender {
+  MALE,
+  FEMALE,
+  NONBINARY,
+};
+
 export enum RankDirection {
   ASCENDING,
   DESCENDING,
@@ -68,6 +74,13 @@ export interface Scorable {
 /**
  * Represents one result of an athlete in an event. Uniquely identified by
  * {firstName, lastName, event} fields (TODO: this can break, should handle duplicate names)
+ *
+ * Fields to add
+ *  - gender
+ *  - division
+ *  - wind
+ *  - place
+ *  - team
  */
 export class Result {
   scorable: Scorable;
@@ -161,7 +174,7 @@ export class ThrowResult extends Result {
     }
     this.implementWeightUnit = implementWeightUnit;
     this.fields.set(ResultField.IMPLEMENT_WEIGHT, `${this.implementWeight}`);
-    this.fields.set(ResultField.IMPLEMENT_WEIGHT_UNIT, `${str(this.implementWeightUnit)}`);
+    this.fields.set(ResultField.IMPLEMENT_WEIGHT_UNIT, str(this.implementWeightUnit));
   }
 }
 
@@ -188,16 +201,276 @@ export class JoggersMileResult extends Result {
   }
 }
 
+export class CompiledResult {
+  result: Result;
+  constructor(result: Result) {
+    this.result = result;
+  }
+
+  getType(): string {
+    return "Event";
+  }
+
+  getGender(): Gender {
+    throw new Error("Unimplemented");
+  }
+
+  getDivision(): string {
+    throw new Error("CompiledResult is an abstract class");
+  }
+
+  getEvent(): string {
+    return str(this.result.event);
+  }
+
+  getPlace(): ?number {
+    throw new Error("Unimplemented");
+  }
+
+  getResult(): string {
+    return this.result.mark;
+  }
+
+  getTeam(): string {
+    throw new Error("Unimplemented");
+  }
+
+  getFirstName1(): string {
+    return "";
+  }
+
+  getLastName1(): string {
+    return "";
+  }
+
+
+  // Optional fields
+  getSeed(): ?number {
+    return null;
+  }
+
+  getScore(): ?number {
+    return null;
+  }
+
+  getRound(): ?number {
+    return null;
+  }
+
+  getHeat(): ?number {
+    return null;
+  }
+
+  getWind(): ?number {
+    return null;
+  }
+
+  getHeatPlace(): ?number {
+    return null;
+  }
+
+  getRelayLetter(): ?string {
+    return null;
+  }
+
+  getGrade1(): ?string {
+    return null;
+  }
+
+  getGender1(): ?Gender {
+    return null;
+  }
+
+  getRegId1(): ?string {
+    return null;
+  }
+
+  getBirthday1(): ?string {
+    return null;
+  }
+
+  getFirstName2(): ?string {
+    return null;
+  }
+
+  getLastName2(): ?string {
+    return null;
+  }
+
+  getGrade2(): ?string {
+    return null;
+  }
+
+  getGender2(): ?Gender {
+    return null;
+  }
+
+  getRegId2(): ?string {
+    return null;
+  }
+
+  getBirthday2(): ?string {
+    return null;
+  }
+
+  getFirstName3(): ?string {
+    return null;
+  }
+
+  getLastName3(): ?string {
+    return null;
+  }
+
+  getGrade3(): ?string {
+    return null;
+  }
+
+  getGender3(): ?Gender {
+    return null;
+  }
+
+  getRegId3(): ?string {
+    return null;
+  }
+
+  getBirthday3(): ?string {
+    return null;
+  }
+
+  getFirstName4(): ?string {
+    return null;
+  }
+
+  getLastName4(): ?string {
+    return null;
+  }
+
+  getGrade4(): ?string {
+    return null;
+  }
+
+  getGender4(): ?Gender {
+    return null;
+  }
+
+  getRegId4(): ?string {
+    return null;
+  }
+
+  getBirthday4(): ?string {
+    return null;
+  }
+
+  getFirstName5(): ?string {
+    return null;
+  }
+
+  getLastName5(): ?string {
+    return null;
+  }
+
+  getGrade5(): ?string {
+    return null;
+  }
+
+  getGender5(): ?Gender {
+    return null;
+  }
+
+  getRegId5(): ?string {
+    return null;
+  }
+
+  getBirthday5(): ?string {
+    return null;
+  }
+
+  getFirstName6(): ?string {
+    return null;
+  }
+
+  getLastName6(): ?string {
+    return null;
+  }
+
+  getGrade6(): ?string {
+    return null;
+  }
+
+  getGender6(): ?Gender {
+    return null;
+  }
+
+  getRegId6(): ?string {
+    return null;
+  }
+
+  getBirthday6(): ?string {
+    return null;
+  }
+
+  getFirstName7(): ?string {
+    return null;
+  }
+
+  getLastName7(): ?string {
+    return null;
+  }
+
+  getGrade7(): ?string {
+    return null;
+  }
+
+  getGender7(): ?Gender {
+    return null;
+  }
+
+  getRegId7(): ?string {
+    return null;
+  }
+
+  getBirthday7(): ?string {
+    return null;
+  }
+
+  getFirstName8(): ?string {
+    return null;
+  }
+
+  getLastName8(): ?string {
+    return null;
+  }
+
+  getGrade8(): ?string {
+    return null;
+  }
+
+  getGender8(): ?Gender {
+    return null;
+  }
+
+  getRegId8(): ?string {
+    return null;
+  }
+
+  getBirthday8(): ?string {
+    return null;
+  }
+}
+
+export class CompiledTrackResult extends CompiledResult {
+  constructor(
+    res: TrackResult,
+  ) {
+    super(res);
+  }
+
+  getDivision(): string {
+    throw new Error("Unimplemented");
+  }
+}
+
 // Types of results (specifies scoring and unique field requirements)
 // Division result (default is Open)
 // Track results with wind mark (100, 200, hurdles <400m)
 // Field events with wind mark (long jump, triple jump)
-
-/**
- * Fields to add
- * gender
- * division
- * wind
- * place
- * team
- */
