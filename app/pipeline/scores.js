@@ -59,7 +59,7 @@ export class JoggersMileScorable implements Scorable {
   score(mark: string, fields: Map<ResultField, string>): ?number {
     if (mark.split(":").length != 2) return null;
     const predMin = parseInt(fields.get(ResultField.PREDICTED_TIME_MINS));
-    const predSec = Math.ceil(parseFloat(fields.get(ResultField.PREDICTED_TIME_SECS)));
+    const predSec = parseInt(fields.get(ResultField.PREDICTED_TIME_SECS));
     if (isNaN(predMin) || isNaN(predSec)) return null;
     const actualTotalSecs = JoggersMileScorable.timeScorable.scoreAsSeconds(mark, fields);
     if (actualTotalSecs == null) return null;

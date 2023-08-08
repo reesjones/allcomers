@@ -178,12 +178,13 @@ export class PoleVaultResult extends Result {
 }
 
 export class JoggersMileResult extends Result {
-  predictedTimeMins: number;
-  predictedTimeSecs: number;
+  predictedTimeMins: string;
+  predictedTimeSecs: string;
 
   constructor(event: Event, fields: Map<ResultField, string>) {
     super(ScoreBy.JoggersMile, event, fields);
-    // const predictedTimeStr = Result._requireField(fields, ResultField.PREDICTED_TIME_MINS);
+    this.predictedTimeMins = Result._requireField(fields, ResultField.PREDICTED_TIME_MINS);
+    this.predictedTimeSecs = Result._requireField(fields, ResultField.PREDICTED_TIME_SECS);
   }
 }
 

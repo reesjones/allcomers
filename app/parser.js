@@ -106,6 +106,8 @@ const JOGGERS_MILE_COLS: Map<ResultField, Array<string>> = new Map<ResultField, 
   [ResultField.GENDER, ["Gender"]],
   [ResultField.HEAT, ["Heat"]],
   [ResultField.LANE, ["Lane"]],
+  [ResultField.PREDICTED_TIME_MINS, ["Predicted Time: Minutes", "Time: Minutes"]],
+  [ResultField.PREDICTED_TIME_SECS, ["Predicted Time: Seconds", "Time: Seconds"]],
   [ResultField.MARK, ["Time", "Results", "Result"]],
 ]);
 
