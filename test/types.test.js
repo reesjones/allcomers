@@ -16,7 +16,8 @@ import {test, expect} from '@jest/globals'
 const EMPTY_MAP: Map<ResultField, string> = new Map();
 // TODO: after Result refactor, instantiate as JoggersMileResult().getFields()
 const JOGGERS_MAP: Map<ResultField, string> = new Map([
-  [ResultField.PREDICTED_TIME, "6:00"],
+  [ResultField.PREDICTED_TIME_MINS, "6"],
+  [ResultField.PREDICTED_TIME_SECS, "00"],
 ]);
 
 function testNullScores(s: Scorable): void {

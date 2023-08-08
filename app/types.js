@@ -1,5 +1,5 @@
 // @flow
-import { Scorables } from "./pipeline/scores";
+import { ScoreBy } from "./pipeline/scores";
 import {str} from "./util";
 
 export enum Event {
@@ -47,7 +47,8 @@ export enum ResultField {
   LANE,
   EVENT,
   MARK,
-  PREDICTED_TIME,
+  PREDICTED_TIME_MINS,
+  PREDICTED_TIME_SECS,
   HURDLE_HEIGHT,
   IMPLEMENT_WEIGHT,
   IMPLEMENT_WEIGHT_UNIT,
@@ -94,6 +95,24 @@ export class Result {
     return val;
   }
 
+  static _requireFloatField(fieldMap: Map<ResultField, string>, field: ResultField): number {
+    const val = Result._requireField(fieldMap, field);
+    const parsed = parseFloat(val);
+    if (isNaN(parsed)) {
+      throw new Error(`Cannot construct result with ${str(field)} field value of ${val}`);
+    }
+    return parsed;
+  }
+
+  static _requireIntField(fieldMap: Map<ResultField, string>, field: ResultField): number {
+    const val = Result._requireField(fieldMap, field);
+    const parsed = parseInt(val);
+    if (isNaN(parsed)) {
+      throw new Error(`Cannot construct result with ${str(field)} field value of ${val}`);
+    }
+    return parsed;
+  }
+
   key(): string {
     return `${str(this.event)}-${this.lastName}-${this.firstName}`;
   }
@@ -119,20 +138,65 @@ export enum WeightUnit {
   LB,
 };
 
+export class JumpResult extends Result {
+  constructor(event: Event, fields: Map<ResultField, string>) {
+    super(ScoreBy.Distance, event, fields);
+  }
+}
+
 export class ThrowResult extends Result {
   implementWeight: number;
   implementWeightUnit: WeightUnit;
-  constructor(scorable: Scorable, event: Event, fields: Map<ResultField, string>) {
-    super(Scorables.Distance, event, fields);
-    const implementWeightStr = Result._requireField(fields, ResultField.IMPLEMENT_WEIGHT);
-    const implementWeight = parseFloat(implementWeightStr);
-    const implementWeightUnitStr = Result._requireField(fields, ResultField.IMPLEMENT_WEIGHT_UNIT);
-    if (implementWeight == null || isNaN(implementWeight)) {
-      throw new Error(`Implement weight value passed to ThrowResult() is not a number: ${implementWeightStr}`);
-    }
+
+  // TODO: Add event param validation
+  constructor(event: Event, fields: Map<ResultField, string>) {
+    super(ScoreBy.Distance, event, fields);
+    this.implementWeight = Result._requireFloatField(fields, ResultField.IMPLEMENT_WEIGHT);
+    let implementWeightUnitStr = Result._requireField(fields, ResultField.IMPLEMENT_WEIGHT_UNIT)
+      .replace(/[^A-Za-z]/g, '').toUpperCase();
+    if (implementWeightUnitStr == "K") implementWeightUnitStr = "KG";
     const implementWeightUnit = WeightUnit.cast(implementWeightUnitStr);
     if (implementWeightUnit == null) {
       throw new Error(`Implement weight unit value passed to ThrowResult() is not a valid WeightUnit: ${implementWeightUnitStr}`);
     }
+    this.implementWeightUnit = implementWeightUnit;
+    this.fields.set(ResultField.IMPLEMENT_WEIGHT, `${this.implementWeight}`);
+    this.fields.set(ResultField.IMPLEMENT_WEIGHT_UNIT, `${str(this.implementWeightUnit)}`);
   }
 }
+
+export class TrackResult extends Result {
+  constructor(event: Event, fields: Map<ResultField, string>) {
+    super(ScoreBy.Time, event, fields);
+  }
+}
+
+export class PoleVaultResult extends Result {
+  constructor(event: Event, fields: Map<ResultField, string>) {
+    super(ScoreBy.ImperialLength, event, fields);
+  }
+}
+
+export class JoggersMileResult extends Result {
+  predictedTimeMins: number;
+  predictedTimeSecs: number;
+
+  constructor(event: Event, fields: Map<ResultField, string>) {
+    super(ScoreBy.JoggersMile, event, fields);
+    // const predictedTimeStr = Result._requireField(fields, ResultField.PREDICTED_TIME_MINS);
+  }
+}
+
+// Types of results (specifies scoring and unique field requirements)
+// Division result (default is Open)
+// Track results with wind mark (100, 200, hurdles <400m)
+// Field events with wind mark (long jump, triple jump)
+
+/**
+ * Fields to add
+ * gender
+ * division
+ * wind
+ * place
+ * team
+ */

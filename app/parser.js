@@ -7,7 +7,7 @@ import {
   DistanceScorable,
   ImperialLengthScorable,
   JoggersMileScorable,
-  Scorables,
+  ScoreBy,
   TimeScorable,
 } from "./pipeline/scores";
 
@@ -16,6 +16,11 @@ import {
   ResultField,
   Result,
   EMPTY_COL,
+  JumpResult,
+  ThrowResult,
+  TrackResult,
+  PoleVaultResult,
+  JoggersMileResult,
 } from "./types";
 import * as XLSX from 'xlsx';
 import {CellObject, Workbook, Worksheet} from 'xlsx';
@@ -77,6 +82,8 @@ const DEFAULT_COLS: Map<ResultField, Array<string>> = new Map<ResultField, Array
   [ResultField.HEAT, ["Heat"]],
   [ResultField.LANE, ["Lane"]],
   [ResultField.MARK, ["Results", "Result"]],
+  [ResultField.IMPLEMENT_WEIGHT, ["Implement Size", "Implement"]],
+  [ResultField.IMPLEMENT_WEIGHT_UNIT, ["Implement Size", "Implement"]],
 ]);
 
 const HURDLES_COLS: Map<ResultField, Array<string>> = new Map<ResultField, Array<string>>([
@@ -154,7 +161,7 @@ function getFields(name: string, config: SheetConfig, headerRow: Array<CellObjec
   };
 }
 
-function getScorableForEvent(event: Event): Scorable {
+function constructResultForEvent(event: Event, fields: Map<ResultField, string>): Result {
   switch (event) {
     case Event.E100:
     case Event.E200:
@@ -177,21 +184,19 @@ function getScorableForEvent(event: Event): Scorable {
     case Event.E4x400:
     case Event.EDMR:
     case Event.ESMR:
-      return Scorables.Time;
-
-    case Event.ELongJump:
-    case Event.EHighJump:
-    case Event.ETripleJump:
+      return new TrackResult(event, fields);
     case Event.EShotput:
     case Event.EJavelin:
     case Event.EDiscus:
-      return Scorables.Distance;
-
+      return new ThrowResult(event, fields);
+    case Event.ELongJump:
+    case Event.EHighJump:
+    case Event.ETripleJump:
+      return new JumpResult(event, fields);
     case Event.EPoleVault:
-      return Scorables.ImperialLength;
-
+      return new PoleVaultResult(event, fields);
     case Event.EJoggersMile:
-      return Scorables.JoggersMile;
+      return new JoggersMileResult(event, fields);
   }
 }
 
@@ -233,13 +238,24 @@ function *genResults(
     fields.set(ResultField.LAST_NAME, f(row, ResultField.LAST_NAME) ?? "");
     fields.set(ResultField.MARK, mark);
 
-    if (sheetName == "Hurdles") {
+    const norm = sheetName.toLowerCase().trim();
+    if (norm == "hurdles") {
       fields.set(ResultField.HURDLE_HEIGHT, f(row, ResultField.HURDLE_HEIGHT) ?? "");
+    } else if (norm.includes("jogger") && norm.includes("mile")) {
+      const mins = f(row, ResultField.PREDICTED_TIME_MINS) ?? "";
+      const secs = f(row, ResultField.PREDICTED_TIME_SECS) ?? "";
+      fields.set(ResultField.PREDICTED_TIME_MINS, mins);
+      fields.set(ResultField.PREDICTED_TIME_SECS, secs);
+    } else if ((norm.includes("shot") && norm.includes("put")) || norm.includes("discus") || norm.includes("javelin")) {
+      const weight = f(row, ResultField.IMPLEMENT_WEIGHT) ?? "";
+      const weightUnit = f(row, ResultField.IMPLEMENT_WEIGHT_UNIT) ?? "";
+      fields.set(ResultField.IMPLEMENT_WEIGHT, weight);
+      fields.set(ResultField.IMPLEMENT_WEIGHT_UNIT, weightUnit);
     }
 
     const event = config.getEvent(fields);
     if (event == null) continue;
-    yield new Result(getScorableForEvent(event), event, fields);
+    yield constructResultForEvent(event, fields);
   }
 }
 

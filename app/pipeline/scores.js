@@ -58,13 +58,11 @@ export class JoggersMileScorable implements Scorable {
   static timeScorable: TimeScorable = new TimeScorable();
   score(mark: string, fields: Map<ResultField, string>): ?number {
     if (mark.split(":").length != 2) return null;
-    const prediction = fields.get(ResultField.PREDICTED_TIME);
-    if (!prediction || prediction.trim() == "") return null;
-    const [predMinStr, predSecStr] = prediction.trim().split(":");
-    const [predMin, predSec] = [parseInt(predMinStr), parseInt(predSecStr)];
+    const predMin = parseInt(fields.get(ResultField.PREDICTED_TIME_MINS));
+    const predSec = Math.ceil(parseFloat(fields.get(ResultField.PREDICTED_TIME_SECS)));
     if (isNaN(predMin) || isNaN(predSec)) return null;
     const actualTotalSecs = JoggersMileScorable.timeScorable.scoreAsSeconds(mark, fields);
-    if (!actualTotalSecs) return null;
+    if (actualTotalSecs == null) return null;
     const predictedTotalSecs = predMin*60 + predSec;
     return Math.ceil(actualTotalSecs) - predictedTotalSecs;
   }
@@ -99,7 +97,7 @@ export class ImperialLengthScorable implements Scorable {
   }
 }
 
-export class Scorables {
+export class ScoreBy {
   static Time: TimeScorable = new TimeScorable();
   static Distance: DistanceScorable = new DistanceScorable();
   static JoggersMile: JoggersMileScorable = new JoggersMileScorable();
