@@ -21,6 +21,7 @@ import {
   TrackResult,
   PoleVaultResult,
   JoggersMileResult,
+  HurdleResult,
 } from "./types";
 import * as XLSX from 'xlsx';
 import {CellObject, Workbook, Worksheet} from 'xlsx';
@@ -179,17 +180,18 @@ function constructResultForEvent(event: Event, fields: Map<ResultField, string>)
     case Event.E5000:
     case Event.E10000:
     case Event.ERaceWalk:
-    case Event.E80Hurdles:
-    case Event.E100Hurdles:
-    case Event.E110Hurdles:
-    case Event.E300Hurdles:
-    case Event.E400Hurdles:
     case Event.E4x100:
     case Event.E4x200:
     case Event.E4x400:
     case Event.EDMR:
     case Event.ESMR:
       return new TrackResult(event, fields);
+    case Event.E80Hurdles:
+    case Event.E100Hurdles:
+    case Event.E110Hurdles:
+    case Event.E300Hurdles:
+    case Event.E400Hurdles:
+      return new HurdleResult(event, fields);
     case Event.EShotput:
     case Event.EJavelin:
     case Event.EDiscus:
@@ -247,7 +249,7 @@ function *genResults(
     fields.set(ResultField.TEAM, f(row, ResultField.TEAM) ?? "");
 
     const norm = sheetName.toLowerCase().trim();
-    if (norm == "hurdles") {
+    if (norm.includes("hurdle")) {
       fields.set(ResultField.HURDLE_HEIGHT, f(row, ResultField.HURDLE_HEIGHT) ?? "");
     } else if (norm.includes("jogger") && norm.includes("mile")) {
       const mins = f(row, ResultField.PREDICTED_TIME_MINS) ?? "";

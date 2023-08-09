@@ -53,6 +53,7 @@ export enum ResultField {
   HURDLE_HEIGHT,
   IMPLEMENT_WEIGHT,
   IMPLEMENT_WEIGHT_UNIT,
+  DIVISION, // TODO remove, make this computed (getDivision())
 };
 
 export enum Gender {
@@ -77,7 +78,6 @@ export interface Scorable {
  * {firstName, lastName, event} fields (TODO: this can break, should handle duplicate names)
  *
  * Fields to add
- *  - division
  *  - place
  */
 export class Result {
@@ -158,6 +158,10 @@ export class Result {
     return this.scorable.score(this.mark, this.fields);
   }
 
+  getDivision(): string {
+    return "Open";
+  }
+
   // Returns all fields tracked by the result (subclasses may override this to add more fields)
   getFields(): Map<ResultField, string> {
     return this.fields;
@@ -173,6 +177,7 @@ export enum WeightUnit {
 export class JumpResult extends Result {
   constructor(event: Event, fields: Map<ResultField, string>) {
     super(ScoreBy.Distance, event, fields);
+    this.fields.set(ResultField.DIVISION, this.getDivision());
   }
 }
 
@@ -194,18 +199,42 @@ export class ThrowResult extends Result {
     this.implementWeightUnit = implementWeightUnit;
     this.fields.set(ResultField.IMPLEMENT_WEIGHT, `${this.implementWeight}`);
     this.fields.set(ResultField.IMPLEMENT_WEIGHT_UNIT, str(this.implementWeightUnit));
+    this.fields.set(ResultField.DIVISION, this.getDivision());
+  }
+
+  getDivision(): string {
+    return `${this.implementWeight} ${str(this.implementWeightUnit).toLowerCase()}`;
   }
 }
 
 export class TrackResult extends Result {
   constructor(event: Event, fields: Map<ResultField, string>) {
     super(ScoreBy.Time, event, fields);
+    this.fields.set(ResultField.DIVISION, this.getDivision());
+  }
+}
+
+export class HurdleResult extends TrackResult {
+  hurdleHeightStr: string;
+  hurdleHeight: ?number;
+  constructor(event: Event, fields: Map<ResultField, string>) {
+    super(event, fields);
+    console.log(fields);
+    this.hurdleHeightStr = Result._requireField(fields, ResultField.HURDLE_HEIGHT);
+    const hurdleHeight = parseInt(this.hurdleHeightStr.split("(")[0].trim());
+    this.hurdleHeight = isNaN(hurdleHeight) ? null : hurdleHeight;
+    this.fields.set(ResultField.DIVISION, this.getDivision());
+  }
+
+  getDivision(): string {
+    return this.hurdleHeightStr;
   }
 }
 
 export class PoleVaultResult extends Result {
   constructor(event: Event, fields: Map<ResultField, string>) {
     super(ScoreBy.ImperialLength, event, fields);
+    this.fields.set(ResultField.DIVISION, this.getDivision());
   }
 }
 
@@ -217,6 +246,7 @@ export class JoggersMileResult extends Result {
     super(ScoreBy.JoggersMile, event, fields);
     this.predictedTimeMins = Result._requireField(fields, ResultField.PREDICTED_TIME_MINS);
     this.predictedTimeSecs = Result._requireField(fields, ResultField.PREDICTED_TIME_SECS);
+    this.fields.set(ResultField.DIVISION, this.getDivision());
   }
 }
 
@@ -238,7 +268,7 @@ export class CompiledResult {
   }
 
   getDivision(): string {
-    throw new Error("CompiledResult is an abstract class");
+    return this.result.getDivision();
   }
 
   getEvent(): string {
