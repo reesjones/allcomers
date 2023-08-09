@@ -47,6 +47,7 @@ export enum ResultField {
   LANE,
   EVENT,
   MARK,
+  WIND,
   PREDICTED_TIME_MINS,
   PREDICTED_TIME_SECS,
   HURDLE_HEIGHT,
@@ -77,7 +78,6 @@ export interface Scorable {
  *
  * Fields to add
  *  - division
- *  - wind
  *  - place
  *  - team
  */
@@ -89,6 +89,7 @@ export class Result {
   lastName: string;
   mark: string;
   gender: ?Gender;
+  wind: ?number;
 
   constructor(scorable: Scorable, event: Event, fields: Map<ResultField, string>) {
     this.scorable = scorable;
@@ -98,6 +99,8 @@ export class Result {
     this.firstName = Result._requireField(fields, ResultField.FIRST_NAME);
     this.lastName = Result._requireField(fields, ResultField.LAST_NAME);
     this.mark = Result._requireField(fields, ResultField.MARK);
+    this.wind = Result._requireFloatFieldOptional(fields, ResultField.WIND);
+
     const genderStr = Result._requireField(fields, ResultField.GENDER).trim().toLowerCase();
     this.gender = null;
     if (genderStr.includes("female") || genderStr.includes("girl") || genderStr.includes("women")) {
@@ -125,6 +128,11 @@ export class Result {
       throw new Error(`Cannot construct result with ${str(field)} field value of ${val}`);
     }
     return parsed;
+  }
+
+  static _requireFloatFieldOptional(fieldMap: Map<ResultField, string>, field: ResultField): ?number {
+    const parsed = parseFloat(Result._requireField(fieldMap, field));
+    return isNaN(parsed) ? null : parsed;
   }
 
   static _requireIntField(fieldMap: Map<ResultField, string>, field: ResultField): number {
@@ -211,6 +219,9 @@ export class JoggersMileResult extends Result {
   }
 }
 
+/**
+ * A wrapper over Result classes, presenting in terms of athletic.net columns.
+ */
 export class CompiledResult {
   result: Result;
   constructor(result: Result) {
@@ -253,8 +264,11 @@ export class CompiledResult {
     return "";
   }
 
-
   // Optional fields
+  getWind(): ?number {
+    return this.result.wind;
+  }
+
   getSeed(): ?number {
     return null;
   }
@@ -268,10 +282,6 @@ export class CompiledResult {
   }
 
   getHeat(): ?number {
-    return null;
-  }
-
-  getWind(): ?number {
     return null;
   }
 

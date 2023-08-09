@@ -81,6 +81,7 @@ const DEFAULT_COLS: Map<ResultField, Array<string>> = new Map<ResultField, Array
   [ResultField.GENDER, ["Gender"]],
   [ResultField.HEAT, ["Heat"]],
   [ResultField.LANE, ["Lane"]],
+  [ResultField.WIND, ["Wind", "Wind speed", "Windspeed"]],
   [ResultField.MARK, ["Results", "Result"]],
   [ResultField.IMPLEMENT_WEIGHT, ["Implement Size", "Implement"]],
   [ResultField.IMPLEMENT_WEIGHT_UNIT, ["Implement Size", "Implement"]],
@@ -154,7 +155,8 @@ const SHEET_CONFIGS: Map<string, SheetConfig> = new Map([
 function getFields(name: string, config: SheetConfig, headerRow: Array<CellObject_t>): (Array<CellObject_t>, ResultField) => ?string {
   const colMap = new Map<ResultField, ?number>();
   for (const [field, cols] of config.cols) {
-    const idx = headerRow.findIndex(cell => cell != null && cols.includes(cell.v));
+    const colsNorm = cols.map(c => c.trim().toLowerCase());
+    const idx = headerRow.findIndex(cell => cell != null && colsNorm.includes(cell.v.trim().toLowerCase()));
     if (idx != -1) colMap.set(field, idx);
   }
   return function (row: Array<CellObject_t>, field: ResultField): ?string {
@@ -240,6 +242,7 @@ function *genResults(
     fields.set(ResultField.LAST_NAME, f(row, ResultField.LAST_NAME) ?? "");
     fields.set(ResultField.MARK, mark);
     fields.set(ResultField.GENDER, f(row, ResultField.GENDER) ?? "");
+    fields.set(ResultField.WIND, f(row, ResultField.WIND) ?? "");
 
     const norm = sheetName.toLowerCase().trim();
     if (norm == "hurdles") {
