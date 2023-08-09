@@ -1,5 +1,5 @@
 // @flow
-import {assert} from '../util'
+import {assert, str} from '../util'
 import {Event, Result, RankDirection} from '../types'
 
 export class Filter {
@@ -23,9 +23,38 @@ export class Ranker {
     this.events = events;
   }
 
-  rank(results: Array<Result>, dir: RankDirection, scoreCol: string = "score"): Array<Result> {
-    assert(results.every(result => this.events.has(result.event)));
-    throw new Error("Implementation is unfinished");
+  rank(results: Array<Result>, dir: RankDirection): Array<Result> {
+    const relevantResults = results.filter(r => this.events.has(r.event));
+    const irrelevantResults = results.filter(r => !this.events.has(r.event));
+    // Group by event, gender, division
+    const groups = new Map<string, Array<Result>>();
+    relevantResults.forEach(res => {
+      const groupKey = `${str(res.event)}-${str(res.gender)}-${res.getDivision()}`;
+      const existing = groups.get(groupKey) ?? [];
+      existing.push(res);
+      groups.set(groupKey, existing);
+    });
+    const sortedGroups = new Map<string, Array<Result>>();
+    for (let [groupKey, group] of groups.entries()) {
+      const sorted = group.sort((r1: Result, r2: Result) => {
+        const ascending = dir === RankDirection.ASCENDING;
+        const [score1, score2] = [r1.getScore(), r2.getScore()];
+        if (score1 == null && score2 == null) {
+          return 0;
+        } else if (score1 == null) {
+          return 1;
+        } else if (score2 == null) {
+          return -1;
+        } else {
+          return ascending ? score1 - score2 : score2 - score1;
+        }
+      });
+      sortedGroups.set(groupKey, sorted);
+      sorted.forEach((result, i) => {
+        result.setRank(i+1);
+      })
+    }
+    return [...sortedGroups.values(), irrelevantResults].flat(1);
   }
 }
 
@@ -76,8 +105,7 @@ export class RankerStep extends PipelineStep {
   }
 
   *run(results: Array<Result>): Generator<Result, void, any> {
-    // TODO
-    for (let r of results) yield r;
+    for (let r of this.ranker.rank(results, this.dir)) yield r;
   }
 }
 

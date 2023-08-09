@@ -5,8 +5,8 @@ import {useState} from "react";
 import * as XLSX from 'xlsx';
 import {Workbook} from 'xlsx';
 import {ResultParser, GoogleSheetsResultParser} from './parser';
-import {Result, ResultField} from './types';
-import {Pipeline} from './pipeline/core';
+import {Event, RankDirection, Result, ResultField} from './types';
+import {Pipeline, Ranker} from './pipeline/core';
 import {DNFFilter, DNSFilter, NHFilter, NMFilter, NoNameFilter} from './pipeline/filters';
 import {AddUnattachedIfEmptyTeamTransformer} from './pipeline/transformers';
 import {fillEmpty, emptyRow, emptyCell, camelize} from './util';
@@ -24,6 +24,40 @@ import PipelineBuilder from './pipeline/builder';
 
 import type { CellObject_t, Workbook_t, Worksheet_t } from './xlsx_types';
 import type { CellChange_t, TextCell_t } from './reactgrid_types'
+
+const lowerIsBetterEvents: Set<Event> = new Set([
+  Event.E100,
+  Event.E200,
+  Event.E400,
+  Event.E800,
+  Event.E1500,
+  Event.EMile,
+  Event.EJoggersMile,
+  Event.E3000,
+  Event.E2Mile,
+  Event.E5000,
+  Event.E10000,
+  Event.ERaceWalk,
+  Event.E80Hurdles,
+  Event.E100Hurdles,
+  Event.E110Hurdles,
+  Event.E300Hurdles,
+  Event.E400Hurdles,
+  Event.E4x100,
+  Event.E4x200,
+  Event.E4x400,
+  Event.EDMR,
+  Event.ESMR,
+]);
+const higherIsBetterEvents: Set<Event> = new Set([
+  Event.EPoleVault,
+  Event.ELongJump,
+  Event.EHighJump,
+  Event.ETripleJump,
+  Event.EShotput,
+  Event.EJavelin,
+  Event.EDiscus,
+]);
 
 const HDR_ROW = {
   rowId: "header",
@@ -79,6 +113,8 @@ export function CompiledPane(props: {results: Array<Result>}): React$Element<any
     .filter(new NHFilter())
     .filter(new NMFilter())
     .transform(new AddUnattachedIfEmptyTeamTransformer())
+    .rank(new Ranker(lowerIsBetterEvents), RankDirection.ASCENDING)
+    .rank(new Ranker(higherIsBetterEvents), RankDirection.DESCENDING)
     .build();
   const transformedResults = pipe.run(props.results);
 

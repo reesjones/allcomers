@@ -54,6 +54,7 @@ export enum ResultField {
   IMPLEMENT_WEIGHT,
   IMPLEMENT_WEIGHT_UNIT,
   DIVISION, // TODO remove, make this computed (getDivision())
+  RANK, // TODO remove once CompiledResult used
 };
 
 export enum Gender {
@@ -81,15 +82,16 @@ export interface Scorable {
  *  - place
  */
 export class Result {
+  mark: string;
   scorable: Scorable;
   event: Event;
   fields: Map<ResultField, string>;
   firstName: string;
   lastName: string;
-  mark: string;
   gender: ?Gender;
   wind: ?number;
   team: string;
+  rank: ?number;
 
   constructor(scorable: Scorable, event: Event, fields: Map<ResultField, string>) {
     this.scorable = scorable;
@@ -166,6 +168,11 @@ export class Result {
   getFields(): Map<ResultField, string> {
     return this.fields;
   }
+
+  setRank(rank: number): void {
+    this.rank = rank;
+    this.fields.set(ResultField.RANK, str(rank));
+  }
 }
 
 export enum WeightUnit {
@@ -219,7 +226,6 @@ export class HurdleResult extends TrackResult {
   hurdleHeight: ?number;
   constructor(event: Event, fields: Map<ResultField, string>) {
     super(event, fields);
-    console.log(fields);
     this.hurdleHeightStr = Result._requireField(fields, ResultField.HURDLE_HEIGHT);
     const hurdleHeight = parseInt(this.hurdleHeightStr.split("(")[0].trim());
     this.hurdleHeight = isNaN(hurdleHeight) ? null : hurdleHeight;
