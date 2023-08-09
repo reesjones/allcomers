@@ -77,7 +77,7 @@ const DEFAULT_COLS: Map<ResultField, Array<string>> = new Map<ResultField, Array
   [ResultField.AGE, ["Age"]],
   [ResultField.FIRST_NAME, ["First Name"]],
   [ResultField.LAST_NAME, ["Last Name"]],
-  [ResultField.TEAM, ["Club/Team"]],
+  [ResultField.TEAM, ["Team Name", "Club/Team", "Club", "Team"]],
   [ResultField.GENDER, ["Gender"]],
   [ResultField.HEAT, ["Heat"]],
   [ResultField.LANE, ["Lane"]],
@@ -91,10 +91,11 @@ const HURDLES_COLS: Map<ResultField, Array<string>> = new Map<ResultField, Array
   [ResultField.AGE, ["Age"]],
   [ResultField.FIRST_NAME, ["First Name"]],
   [ResultField.LAST_NAME, ["Last Name"]],
-  [ResultField.TEAM, ["Club/Team"]],
+  [ResultField.TEAM, ["Team Name", "Club/Team", "Club", "Team"]],
   [ResultField.GENDER, ["Gender"]],
   [ResultField.HEAT, ["Heat"]],
   [ResultField.LANE, ["Lane"]],
+  [ResultField.WIND, ["Wind", "Wind speed", "Windspeed"]],
   [ResultField.MARK, ["Results", "Result"]],
   [ResultField.HURDLE_HEIGHT, ["Hurdle Height: Inches", "Event Hurdle Height: Inches"]],
 ]);
@@ -103,7 +104,7 @@ const JOGGERS_MILE_COLS: Map<ResultField, Array<string>> = new Map<ResultField, 
   [ResultField.AGE, ["Age"]],
   [ResultField.FIRST_NAME, ["First Name"]],
   [ResultField.LAST_NAME, ["Last Name"]],
-  [ResultField.TEAM, ["Club/Team"]],
+  [ResultField.TEAM, ["Team Name", "Club/Team", "Club", "Team"]],
   [ResultField.GENDER, ["Gender"]],
   [ResultField.HEAT, ["Heat"]],
   [ResultField.LANE, ["Lane"]],
@@ -117,7 +118,7 @@ const RELAY_COLS: Map<ResultField, Array<string>> = new Map<ResultField, Array<s
   [ResultField.AGE, IgnoreThisField],
   [ResultField.FIRST_NAME, IgnoreThisField],
   [ResultField.LAST_NAME, IgnoreThisField],
-  [ResultField.TEAM, ["Team Name"]],
+  [ResultField.TEAM, ["Team Name", "Club/Team", "Club", "Team"]],
   [ResultField.GENDER, IgnoreThisField],
   [ResultField.HEAT, ["Heat"]],
   [ResultField.LANE, ["Lane"]],
@@ -243,6 +244,7 @@ function *genResults(
     fields.set(ResultField.MARK, mark);
     fields.set(ResultField.GENDER, f(row, ResultField.GENDER) ?? "");
     fields.set(ResultField.WIND, f(row, ResultField.WIND) ?? "");
+    fields.set(ResultField.TEAM, f(row, ResultField.TEAM) ?? "");
 
     const norm = sheetName.toLowerCase().trim();
     if (norm == "hurdles") {

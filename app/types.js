@@ -79,7 +79,6 @@ export interface Scorable {
  * Fields to add
  *  - division
  *  - place
- *  - team
  */
 export class Result {
   scorable: Scorable;
@@ -90,6 +89,7 @@ export class Result {
   mark: string;
   gender: ?Gender;
   wind: ?number;
+  team: string;
 
   constructor(scorable: Scorable, event: Event, fields: Map<ResultField, string>) {
     this.scorable = scorable;
@@ -100,6 +100,7 @@ export class Result {
     this.lastName = Result._requireField(fields, ResultField.LAST_NAME);
     this.mark = Result._requireField(fields, ResultField.MARK);
     this.wind = Result._requireFloatFieldOptional(fields, ResultField.WIND);
+    this.team = Result._requireField(fields, ResultField.TEAM);
 
     const genderStr = Result._requireField(fields, ResultField.GENDER).trim().toLowerCase();
     this.gender = null;
