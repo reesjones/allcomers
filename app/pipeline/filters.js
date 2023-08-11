@@ -53,14 +53,14 @@ export class EmptyMarkFilter extends MarkFilter {
   }
 }
 
-export class EventFilter extends MarkFilter {
-  excludeEvent: Event;
-  constructor(excludeEvent: Event) {
+export class EventsFilter extends MarkFilter {
+  excludeEvents: Set<Event>;
+  constructor(excludeEvents: Set<Event>) {
     super();
-    this.excludeEvent = excludeEvent;
+    this.excludeEvents = excludeEvents;
   }
 
   shouldRemove(result: Result): boolean {
-    return result.event === this.excludeEvent;
+    return this.excludeEvents.has(result.event);
   }
 }

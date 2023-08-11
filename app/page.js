@@ -7,7 +7,7 @@ import {Workbook} from 'xlsx';
 import {ResultParser, GoogleSheetsResultParser} from './parser';
 import {CompiledResult, Event, RankDirection, Result, ResultField} from './types';
 import {Pipeline, Ranker} from './pipeline/core';
-import {DNFFilter, DNSFilter, EmptyMarkFilter, EventFilter, NHFilter, NMFilter, NoNameFilter} from './pipeline/filters';
+import {DNFFilter, DNSFilter, EmptyMarkFilter, EventsFilter, NHFilter, NMFilter, NoNameFilter} from './pipeline/filters';
 import {AddUnattachedIfEmptyTeamTransformer} from './pipeline/transformers';
 import {fillEmpty, emptyRow, emptyCell, camelize} from './util';
 import {ReactGrid, CellChange, Column, Row, TextCell} from "@silevis/reactgrid";
@@ -57,6 +57,14 @@ const higherIsBetterEvents: Set<Event> = new Set([
   Event.EShotput,
   Event.EJavelin,
   Event.EDiscus,
+]);
+
+const RELAY_EVENTS: Set<Event> = new Set([
+  Event.E4x100,
+  Event.E4x200,
+  Event.E4x400,
+  Event.EDMR,
+  Event.ESMR,
 ]);
 
 const HDR_ROW = {
@@ -114,7 +122,8 @@ export function CompiledPane(props: {results: Array<Result>}): React$Element<any
     .filter(new NHFilter())
     .filter(new NMFilter())
     .filter(new EmptyMarkFilter())
-    .filter(new EventFilter(Event.EJoggersMile))
+    .filter(new EventsFilter(new Set([Event.EJoggersMile])))
+    .filter(new EventsFilter(RELAY_EVENTS))
     .transform(new AddUnattachedIfEmptyTeamTransformer())
     .rank(new Ranker(lowerIsBetterEvents), RankDirection.ASCENDING)
     .rank(new Ranker(higherIsBetterEvents), RankDirection.DESCENDING)
