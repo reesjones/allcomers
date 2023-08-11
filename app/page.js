@@ -67,37 +67,6 @@ const RELAY_EVENTS: Set<Event> = new Set([
   Event.ESMR,
 ]);
 
-const HDR_ROW = {
-  rowId: "header",
-  cells: [
-    { type: "header", text: "First Name" },
-    { type: "header", text: "Last Name" },
-    { type: "header", text: "C" },
-    { type: "header", text: "D" },
-  ],
-};
-
-const COLS = [
-  {width: 150},
-  {width: 150},
-  {width: 150},
-  {width: 150},
-];
-
-function getRows(results: Array<Result>) {
-  return [
-    HDR_ROW,
-    ...results.map((result, idx) => ({
-      rowId: idx,
-      cells: [
-        {type: "text", text: result.firstName},
-        {type: "text", text: result.lastName},
-      ],
-    })),
-  ];
-}
-
-
 function getAllFields(results: Array<CompiledResult>): Set<string> {
   const headers = new Set<string>();
   for (const res of results) {
