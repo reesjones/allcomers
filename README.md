@@ -8,10 +8,13 @@ This is part of an overall efficiency effort made necessary by unprecedented
 growth in 2023 - by far the largest year ever in its 54-year history.
 
 ### Milestones
+MVP
  * ~~Upload file, basic parse and render in table~~
  * ~~Render "Compiled" table~~
  * ~~Add filters, transforms, ranking, sorting~~
- * Add export function - to XLSX and copy-to-clipboard
+ * Add export function to XLSX
+Extra
+ * Add copy-to-clipboard export
  * Add configuration sidebar to allow user to toggle or specify filters/transforms
  * Display unparsable rows for user to validate whether any results are missed
  * Add integration/e2e tests, and more unit tests
