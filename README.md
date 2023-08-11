@@ -1,112 +1,74 @@
 # All Comers Result processing
 
-Webapp to convert result spreadsheets to athletic.net format. Result spreadsheets
-are from the [Bill Roe All Comers](https://clubnorthwest.org/all-comers) track meets.
+Prototype webapp to convert result spreadsheets to athletic.net format. Result
+spreadsheets are from the [Bill Roe All Comers](https://clubnorthwest.org/all-comers)
+track meets.
 
 This is part of an overall efficiency effort made necessary by unprecedented
 growth in 2023 - by far the largest year ever in its 54-year history.
 
-Milestones
- * Upload file, basic parse of all the results and render in table
- * Add event-specific cols to the parse
- * Render an output table with no-op transform (or add 1 dummy column)
- * Add real transforms
- * Add filter
- * Add sorter
+### Milestones
+ * ~~Upload file, basic parse and render in table~~
+ * ~~Render "Compiled" table~~
+ * ~~Add filters, transforms, ranking, sorting~~
+ * Add export function - to XLSX and copy-to-clipboard
+ * Add configuration sidebar to allow user to toggle or specify filters/transforms
+ * Display unparsable rows for user to validate whether any results are missed
+ * Add integration/e2e tests, and more unit tests
+ * Add user indication and/or confirmation when Original tab edits overwrite
+   Compiled tab edits
+ * Add support for racewalk results
+ * Host on a website somewhere
 
-Rough steps
- * User selects xlsx file
- * Extract XLSX data into unmodified data model (`Array<Result>`), display on left
- * Run data model thru configured pipeline 
- * Display output on right, show export/download button
- * Show relevant pipeline steps as configurations above viz
+### User flow
+ * User selects `.xlsx` file
+ * Unmodified spreadsheet shown in editing window under "Original" tab.
+ * User edits spreadsheet in this tab - fixing typos, specifying missing fields
+ * User selects Compiled tab, containing transformed data into Athletic.net upload format
+ * User reviews correctness of this tab
+ * If correct, click export button or "copy to clipboard"
+ * If incorrect, modify either in place in Compiled tab or back in Original tab
 
-Design
- * Event (enum): All tracked events (100m, mile, pole vault, ...)
- * Result (data class): Represents one result achieved by one athlete
-    * first/last name
-    * event
-    * mark
-    * gender
-    * Sub-classes for event-specific result fields. Subclass must override getScore()
-    * TrackResult getScore(): returns `toInt(mark)`. JoggerMile getScore() returns score (filled in by tfrm)
-    * Set of division fields (gender, implement size, hurdle height)
- * Transformer: Transforms a row. Adds a field, changes a field value.
-    * Normalize implements ("4kg" -> "4 kg"), team name, etc.
-    * Team affiliation - "" -> "Unattached"
-    * Ensure 2 decimal places for FAT time-based marks
-    * Add difference field for jogger's mile
-    * Add blanks or default values for relevant athletic.net cols
-    * Add rank field
- * Sorter: Sorts rows and adds 1-based rank field. Has asc/desc bit. Applied to specified events
-    * TimeSorter for track events scored by a time. Ascending
-    * MeterSorter for long/triple/high, discus, shot, javelin. Descending
-    * ImperialSorter for pole vaule. Descending
-    * Sorter asserts `all(results, r -> r.getScore() != null)`
- * Filter: Removes a row based on field values. Has include/exclude bit
-    * DNF/NM filter
-    * Relay filter
- * Pipeline: applies sequence of filters and transformers and emits results
-    * Emit item-wise or in batches
-    * An ordered map specifies output cols -> field name for the value
- * PipelineBuilder: Builds a pipeline (it's somewhat complex)
- * ResultParser: Parses input results into Array<Result>
-    * GoogleSheetsResultParser: Given an xlsx parser, converts to Array<Result>.
-      Adds event field and event-specific fields.
- * Presenter: Converts Array<Result> into custom output format
-    * CsvPresenter: Converts to csv file, separator can be specified (default `,` but use tab for Brent)
-        * AthleticNetPresenter: Converts to Athletic.net format
-    * StringPresenter: Output is a string
-        * Not implemented in this project
-    * ArrayBufferPresenter: Output is an ArrayBuffer
-        * Not implemented in this project
-
-Pipeline code outline:
+### Transform pipeline outline
 ```
-const p = PipelineBuilder()
+const pipe = new PipelineBuilder()
+    .filter(new NoNameFilter())
     .filter(new DNFFilter())
-    .filter(new RelayFilter())
-    .transform(new NormalizeMarksTransformer())
-    .transform(new FillUnattachedTransformer())
-    .transform(new FatTimeMarkFormatTransformer())
-    .transform(new JoggersMileScoreTransformer())
-    .transform(new BlankAthleticNetFieldsTransformer())
-    .sort(TimeSorter([Event.e100, Event.e200, Event.e400, ...]), "Place", Direction.ASC)
-    .sort(JoggersMileSorter())
-    .sort(MeterSorter([Event.LJ, Event.TJ, Event.Shotput, ...]), "Place", Direction.DESC)
-    .sort(ImperialSorter(Event.PoleVault), "Place", Direction.DESC)
+    .filter(new DNSFilter())
+    .filter(new NHFilter())
+    .filter(new NMFilter())
+    .filter(new EmptyMarkFilter())
+    .filter(new EventsFilter(new Set([Event.EJoggersMile])))
+    .filter(new EventsFilter(RELAY_EVENTS))
+    .transform(new AddUnattachedIfEmptyTeamTransformer())
+    .rank(new Ranker(lowerIsBetterEvents), RankDirection.ASCENDING)
+    .rank(new Ranker(higherIsBetterEvents), RankDirection.DESCENDING)
     .build();
+const transformedResults = pipe.run(props.results).map(res => new CompiledResult(res));
 
-const inres = getInputResults(); // Type: Array<Result>
-// Render component with inres
-const outres = p.run(inres);
-// Render component with outres
+const inputResults = getInputResults(); // Type: Array<Result>
+const outputResults = p.run(inputResults);
+// Render component with outputResults
 ```
 
-React architecture
- * Root maintains original parsed XLSX file, and the pipeline (starts with
-   default specified above). Converted file is not part of state - entirely
-   derived from the first two
- * Need a high quality table component with filtering and cell editing abilities
+### Data pipeline
+```
+ArrayBuffer (uploaded xlsx file)
+ V parseFile(ArrayBuffer): XLSX workbook
+XLSX Workbook, rendered in Original tab
+ V Parser.parse(XLSX.workbook): Array<Result>
+Original Array<Result>
+ V Pipeline.run(Array<Result>): Array<Result>
+Transformed Array<Result>
+ V .map(result => new CompiledResult(result))
+Results wrapped in an athletic.net-specific view
+ V Mapping logic
+Compiled XLSX Workbook, rendered in Compiled tab
+ V Export logic
+CSV, XLSX, or raw text output to upload to athletic.net
+```
 
-
-Notes
- * Add ‘ to result to ensure 2 decimal places for athletic.net validation (hand timed)
- * Exclude DNS/DNF
- * Google sheets can’t do durations
- * Separate divisions/rankings per implement size in discus, shot, jav
- * Fill in unattached if team not listed. Athlete can claim team later if needed
- * TBD: how to handle the nonbinary division
- * Shotput: impl weight may be “4kg” or “4 kg” when parsing
- * Relay results not in athletic. Names aren’t usually official. Ppl can request if needed
- * Division is “open” except for hurdles, throws, which is hurdle height, impl weight
- * Finals or blank for round
- * Athletic upload: copy all the cols A->P (til last name), paste into csv box. Shows color coded preview with cols to do visual verification
- * Copy in excel seemed to use tabs as delim
- * Consider batching the contents to multiple csv files?
- * Forgot to ask - how does Brent count # entries?
-
-(for later) How to embed react in hugo post:
+Hosting on site - How to embed react in hugo post:
 https://josem.co/how-to-render-a-react-component-in-hugo
 
 --------
