@@ -132,19 +132,19 @@ const SHEET_CONFIGS: Map<string, SheetConfig> = new Map([
   ["400m", {getEvent: EVENT(Event.E400), cols: DEFAULT_COLS}],
   ["800m", {getEvent: EVENT(Event.E800), cols: DEFAULT_COLS}],
   ["1500m", {getEvent: EVENT(Event.E1500), cols: DEFAULT_COLS}],
-  ["Mile", {getEvent: EVENT(Event.EMile), cols: DEFAULT_COLS}],
-  ["Joggers Mile", {getEvent: EVENT(Event.EJoggersMile), cols: JOGGERS_MILE_COLS}],
+  ["mile", {getEvent: EVENT(Event.EMile), cols: DEFAULT_COLS}],
+  ["joggersmile", {getEvent: EVENT(Event.EJoggersMile), cols: JOGGERS_MILE_COLS}],
   ["3000", {getEvent: EVENT(Event.E3000), cols: DEFAULT_COLS}],
-  ["2 Mile", {getEvent: EVENT(Event.E2Mile), cols: DEFAULT_COLS}],
+  ["2mile", {getEvent: EVENT(Event.E2Mile), cols: DEFAULT_COLS}],
   ["5000m", {getEvent: EVENT(Event.E5000), cols: DEFAULT_COLS}],
-  ["Triple Jump", {getEvent: EVENT(Event.ETripleJump), cols: DEFAULT_COLS}],
-  ["Long Jump", {getEvent: EVENT(Event.ELongJump), cols: DEFAULT_COLS}],
-  ["High Jump", {getEvent: EVENT(Event.EHighJump), cols: DEFAULT_COLS}],
-  ["Pole Vault", {getEvent: EVENT(Event.EPoleVault), cols: DEFAULT_COLS}],
-  ["Javelin", {getEvent: EVENT(Event.EJavelin), cols: DEFAULT_COLS}],
-  ["Shot Put", {getEvent: EVENT(Event.EShotput), cols: DEFAULT_COLS}],
-  ["Discus", {getEvent: EVENT(Event.EDiscus), cols: DEFAULT_COLS}],
-  ["Hurdles", {getEvent: getEventForHurdlesTab, cols: HURDLES_COLS}],
+  ["triplejump", {getEvent: EVENT(Event.ETripleJump), cols: DEFAULT_COLS}],
+  ["longjump", {getEvent: EVENT(Event.ELongJump), cols: DEFAULT_COLS}],
+  ["highjump", {getEvent: EVENT(Event.EHighJump), cols: DEFAULT_COLS}],
+  ["polevault", {getEvent: EVENT(Event.EPoleVault), cols: DEFAULT_COLS}],
+  ["javelin", {getEvent: EVENT(Event.EJavelin), cols: DEFAULT_COLS}],
+  ["shotput", {getEvent: EVENT(Event.EShotput), cols: DEFAULT_COLS}],
+  ["discus", {getEvent: EVENT(Event.EDiscus), cols: DEFAULT_COLS}],
+  ["hurdles", {getEvent: getEventForHurdlesTab, cols: HURDLES_COLS}],
   ["4x100m", {getEvent: EVENT(Event.E4x100), cols: RELAY_COLS}],
   ["4x200m", {getEvent: EVENT(Event.E4x200), cols: RELAY_COLS}],
   ["4x400m", {getEvent: EVENT(Event.E4x400), cols: RELAY_COLS}],
@@ -270,7 +270,7 @@ function *genResults(
 }
 
 function parseSheet(sheetName: string, sheet: Array<Array<CellObject_t>>): ParseOutput {
-  const config = SHEET_CONFIGS.get(sheetName);
+  const config = SHEET_CONFIGS.get(sheetName.replaceAll(" ", "").toLowerCase());
   let results: Array<Result> = [];
   const log: Array<string> = [];
   if (config == null) {

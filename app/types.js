@@ -169,6 +169,11 @@ export class Result {
     return this.fields;
   }
 
+  getRank(): ?number {
+    const rank = parseInt(this.fields.get(ResultField.RANK));
+    return (isNaN(rank) || rank == null) ? null : rank;
+  }
+
   setRank(rank: number): void {
     this.rank = rank;
     this.fields.set(ResultField.RANK, str(rank));
@@ -199,6 +204,11 @@ export class ThrowResult extends Result {
     let implementWeightUnitStr = Result._requireField(fields, ResultField.IMPLEMENT_WEIGHT_UNIT)
       .replace(/[^A-Za-z]/g, '').toUpperCase();
     if (implementWeightUnitStr == "K") implementWeightUnitStr = "KG";
+    if (implementWeightUnitStr == "KGS") implementWeightUnitStr = "KG";
+    if (implementWeightUnitStr == "GS") implementWeightUnitStr = "G";
+    if (implementWeightUnitStr == "LBS") implementWeightUnitStr = "LB";
+    if (implementWeightUnitStr == "L") implementWeightUnitStr = "LB";
+    if (implementWeightUnitStr == "B") implementWeightUnitStr = "LB";
     const implementWeightUnit = WeightUnit.cast(implementWeightUnitStr);
     if (implementWeightUnit == null) {
       throw new Error(`Implement weight unit value passed to ThrowResult() is not a valid WeightUnit: ${implementWeightUnitStr}`);
@@ -265,6 +275,73 @@ export class CompiledResult {
     this.result = result;
   }
 
+  getFields(): Map<string, string> {
+    return new Map([
+      ["Type", this.getType()],
+      ["Gender", this.getGender()],
+      ["[Division]", this.getDivision()],
+      ["Event", this.getEvent()],
+      ["[Seed]", this.getSeed()],
+      ["[Score]", this.getScore()],
+      ["[Round]", this.getRound()],
+      ["[Heat]", this.getHeat()],
+      ["[Wind]", this.getWind()],
+      ["[HeatPlace]", this.getHeatPlace()],
+      ["[Place]", this.getRank()],
+      ["Result", this.getResult()],
+      ["Team", this.getTeam()],
+      ["[RelayLetter]", this.getRelayLetter()],
+      ["FirstName1", this.getFirstName1()],
+      ["LastName1", this.getLastName1()],
+      ["Grade1", this.getGrade1()],
+      ["Gender1", this.getGender1()],
+      ["RegId1", this.getRegId1()],
+      ["Birthdate1", this.getBirthday1()],
+      ["FirstName2", this.getFirstName2()],
+      ["LastName2", this.getLastName2()],
+      ["Grade2", this.getGrade2()],
+      ["Gender2", this.getGender2()],
+      ["RegId2", this.getRegId2()],
+      ["Birthdate2", this.getBirthday2()],
+      ["FirstName3", this.getFirstName3()],
+      ["LastName3", this.getLastName3()],
+      ["Grade3", this.getGrade3()],
+      ["Gender3", this.getGender3()],
+      ["RegId3", this.getRegId3()],
+      ["Birthdate3", this.getBirthday3()],
+      ["FirstName4", this.getFirstName4()],
+      ["LastName4", this.getLastName4()],
+      ["Grade4", this.getGrade4()],
+      ["Gender4", this.getGender4()],
+      ["RegId4", this.getRegId4()],
+      ["Birthdate4", this.getBirthday4()],
+      ["FirstName5", this.getFirstName5()],
+      ["LastName5", this.getLastName5()],
+      ["Grade5", this.getGrade5()],
+      ["Gender5", this.getGender5()],
+      ["RegId5", this.getRegId5()],
+      ["Birthdate5", this.getBirthday5()],
+      ["FirstName6", this.getFirstName6()],
+      ["LastName6", this.getLastName6()],
+      ["Grade6", this.getGrade6()],
+      ["Gender6", this.getGender6()],
+      ["RegId6", this.getRegId6()],
+      ["Birthdate6", this.getBirthday6()],
+      ["FirstName7", this.getFirstName7()],
+      ["LastName7", this.getLastName7()],
+      ["Grade7", this.getGrade7()],
+      ["Gender7", this.getGender7()],
+      ["RegId7", this.getRegId7()],
+      ["Birthdate7", this.getBirthday7()],
+      ["FirstName8", this.getFirstName8()],
+      ["LastName8", this.getLastName8()],
+      ["Grade8", this.getGrade8()],
+      ["Gender8", this.getGender8()],
+      ["RegId8", this.getRegId8()],
+      ["Birthdate8", this.getBirthday8()],
+    ]);
+  }
+
   getType(): string {
     return "Event";
   }
@@ -281,237 +358,239 @@ export class CompiledResult {
     return str(this.result.event);
   }
 
-  getPlace(): ?number {
-    throw new Error("Unimplemented");
+  getRank(): string {
+    return `${this.result.getRank() ?? ""}`;
   }
 
   getResult(): string {
-    return this.result.mark;
+    const mark = this.result.mark;
+    // TODO: format this and return formatted
+    return mark;
   }
 
   getTeam(): string {
-    throw new Error("Unimplemented");
+    return this.result.team;
   }
 
   getFirstName1(): string {
-    return "";
+    return this.result.firstName;
   }
 
   getLastName1(): string {
-    return "";
+    return this.result.lastName;
   }
 
   // Optional fields
-  getWind(): ?number {
-    return this.result.wind;
+  getWind(): string {
+    return `${this.result.wind ?? ""}`;
   }
 
-  getSeed(): ?number {
-    return null;
+  getSeed(): string{
+    return "";
   }
 
-  getScore(): ?number {
-    return null;
+  getScore(): string {
+    return "";
   }
 
-  getRound(): ?number {
-    return null;
+  getRound(): string {
+    return "";
   }
 
-  getHeat(): ?number {
-    return null;
+  getHeat(): string {
+    return "";
   }
 
-  getHeatPlace(): ?number {
-    return null;
+  getHeatPlace(): string {
+    return "";
   }
 
-  getRelayLetter(): ?string {
-    return null;
+  getRelayLetter(): string {
+    return "";
   }
 
-  getGrade1(): ?string {
-    return null;
+  getGrade1(): string {
+    return "";
   }
 
-  getGender1(): ?Gender {
-    return null;
+  getGender1(): string {
+    return "";
   }
 
-  getRegId1(): ?string {
-    return null;
+  getRegId1(): string {
+    return "";
   }
 
-  getBirthday1(): ?string {
-    return null;
+  getBirthday1(): string {
+    return "";
   }
 
-  getFirstName2(): ?string {
-    return null;
+  getFirstName2(): string {
+    return "";
   }
 
-  getLastName2(): ?string {
-    return null;
+  getLastName2(): string {
+    return "";
   }
 
-  getGrade2(): ?string {
-    return null;
+  getGrade2(): string {
+    return "";
   }
 
-  getGender2(): ?Gender {
-    return null;
+  getGender2(): string {
+    return "";
   }
 
-  getRegId2(): ?string {
-    return null;
+  getRegId2(): string {
+    return "";
   }
 
-  getBirthday2(): ?string {
-    return null;
+  getBirthday2(): string {
+    return "";
   }
 
-  getFirstName3(): ?string {
-    return null;
+  getFirstName3(): string {
+    return "";
   }
 
-  getLastName3(): ?string {
-    return null;
+  getLastName3(): string {
+    return "";
   }
 
-  getGrade3(): ?string {
-    return null;
+  getGrade3(): string {
+    return "";
   }
 
-  getGender3(): ?Gender {
-    return null;
+  getGender3(): string {
+    return "";
   }
 
-  getRegId3(): ?string {
-    return null;
+  getRegId3(): string {
+    return "";
   }
 
-  getBirthday3(): ?string {
-    return null;
+  getBirthday3(): string {
+    return "";
   }
 
-  getFirstName4(): ?string {
-    return null;
+  getFirstName4(): string {
+    return "";
   }
 
-  getLastName4(): ?string {
-    return null;
+  getLastName4(): string {
+    return "";
   }
 
-  getGrade4(): ?string {
-    return null;
+  getGrade4(): string {
+    return "";
   }
 
-  getGender4(): ?Gender {
-    return null;
+  getGender4(): string {
+    return "";
   }
 
-  getRegId4(): ?string {
-    return null;
+  getRegId4(): string {
+    return "";
   }
 
-  getBirthday4(): ?string {
-    return null;
+  getBirthday4(): string {
+    return "";
   }
 
-  getFirstName5(): ?string {
-    return null;
+  getFirstName5(): string {
+    return "";
   }
 
-  getLastName5(): ?string {
-    return null;
+  getLastName5(): string {
+    return "";
   }
 
-  getGrade5(): ?string {
-    return null;
+  getGrade5(): string {
+    return "";
   }
 
-  getGender5(): ?Gender {
-    return null;
+  getGender5(): string {
+    return "";
   }
 
-  getRegId5(): ?string {
-    return null;
+  getRegId5(): string {
+    return "";
   }
 
-  getBirthday5(): ?string {
-    return null;
+  getBirthday5(): string {
+    return "";
   }
 
-  getFirstName6(): ?string {
-    return null;
+  getFirstName6(): string {
+    return "";
   }
 
-  getLastName6(): ?string {
-    return null;
+  getLastName6(): string {
+    return "";
   }
 
-  getGrade6(): ?string {
-    return null;
+  getGrade6(): string {
+    return "";
   }
 
-  getGender6(): ?Gender {
-    return null;
+  getGender6(): string {
+    return "";
   }
 
-  getRegId6(): ?string {
-    return null;
+  getRegId6(): string {
+    return "";
   }
 
-  getBirthday6(): ?string {
-    return null;
+  getBirthday6(): string {
+    return "";
   }
 
-  getFirstName7(): ?string {
-    return null;
+  getFirstName7(): string {
+    return "";
   }
 
-  getLastName7(): ?string {
-    return null;
+  getLastName7(): string {
+    return "";
   }
 
-  getGrade7(): ?string {
-    return null;
+  getGrade7(): string {
+    return "";
   }
 
-  getGender7(): ?Gender {
-    return null;
+  getGender7(): string {
+    return "";
   }
 
-  getRegId7(): ?string {
-    return null;
+  getRegId7(): string {
+    return "";
   }
 
-  getBirthday7(): ?string {
-    return null;
+  getBirthday7(): string {
+    return "";
   }
 
-  getFirstName8(): ?string {
-    return null;
+  getFirstName8(): string {
+    return "";
   }
 
-  getLastName8(): ?string {
-    return null;
+  getLastName8(): string {
+    return "";
   }
 
-  getGrade8(): ?string {
-    return null;
+  getGrade8(): string {
+    return "";
   }
 
-  getGender8(): ?Gender {
-    return null;
+  getGender8(): string {
+    return "";
   }
 
-  getRegId8(): ?string {
-    return null;
+  getRegId8(): string {
+    return "";
   }
 
-  getBirthday8(): ?string {
-    return null;
+  getBirthday8(): string {
+    return "";
   }
 }
 

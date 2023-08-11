@@ -5,7 +5,7 @@ import {useState} from "react";
 import * as XLSX from 'xlsx';
 import {Workbook} from 'xlsx';
 import {ResultParser, GoogleSheetsResultParser} from './parser';
-import {Event, RankDirection, Result, ResultField} from './types';
+import {CompiledResult, Event, RankDirection, Result, ResultField} from './types';
 import {Pipeline, Ranker} from './pipeline/core';
 import {DNFFilter, DNSFilter, NHFilter, NMFilter, NoNameFilter} from './pipeline/filters';
 import {AddUnattachedIfEmptyTeamTransformer} from './pipeline/transformers';
@@ -90,8 +90,8 @@ function getRows(results: Array<Result>) {
 }
 
 
-function getAllFields(results: Array<Result>): Set<ResultField> {
-  const headers = new Set<ResultField>();
+function getAllFields(results: Array<CompiledResult>): Set<string> {
+  const headers = new Set<string>();
   for (const res of results) {
     for (const field of res.getFields().keys()) {
       headers.add(field);
@@ -100,7 +100,7 @@ function getAllFields(results: Array<Result>): Set<ResultField> {
   return headers;
 }
 
-function resultToRow(result: Result, fields: Array<ResultField>): Array<string> {
+function resultToRow(result: CompiledResult, fields: Array<string>): Array<string> {
   const fieldValues = result.getFields();
   return fields.map(f => fieldValues.get(f) ?? "");
 }
@@ -116,15 +116,11 @@ export function CompiledPane(props: {results: Array<Result>}): React$Element<any
     .rank(new Ranker(lowerIsBetterEvents), RankDirection.ASCENDING)
     .rank(new Ranker(higherIsBetterEvents), RankDirection.DESCENDING)
     .build();
-  const transformedResults = pipe.run(props.results);
+  const transformedResults = pipe.run(props.results).map(res => new CompiledResult(res));
 
   const fields = [...getAllFields(transformedResults)];
-  const headerRow = fields.map(field => 
-    // Convert ResultField enum values to human-formatted
-    // TODO: Map instead to expected column names on athletic.net
-    (field: string).split("_").map(part => camelize(part)).join(" "));
   const rowOfStrings = transformedResults.map((result, resultIdx) => resultToRow(result, fields));
-  const rows = [headerRow, ...rowOfStrings];
+  const rows = [fields, ...rowOfStrings];
   const aoa = XLSX.utils.aoa_to_sheet(rows, {dense: true});
   const aoaWorkbook = XLSX.utils.book_new();
   XLSX.utils.book_append_sheet(aoaWorkbook, aoa, "Compiled");
