@@ -310,7 +310,7 @@ export class CompiledResult {
       ["Type", this.getType()],
       ["Gender", this.getGender()],
       ["[Division]", this.getDivision()],
-      ["Event", this.getEvent()],
+      ["Event", this.getEventName()],
       ["[Seed]", this.getSeed()],
       ["[Score]", this.getScore()],
       ["[Round]", this.getRound()],
@@ -393,9 +393,7 @@ export class CompiledResult {
   }
 
   getResult(): string {
-    const mark = this.result.getMark();
-    // TODO: format this and return formatted
-    return mark;
+    return this.result.getMark();
   }
 
   getTeam(): string {
@@ -413,6 +411,55 @@ export class CompiledResult {
   // Optional fields
   getWind(): string {
     return `${this.result.wind ?? ""}`;
+  }
+  
+  getEventName(): string {
+    const event = this.result.event;
+    switch (event) {
+      case Event.E100:
+      case Event.E200:
+      case Event.E400:
+      case Event.E800:
+      case Event.E1500:
+      case Event.E3000:
+      case Event.E5000:
+      case Event.E10000:
+      case Event.E4x100:
+      case Event.E4x200:
+      case Event.E4x400:
+        return `${str(event).slice(1)}m`;
+      case Event.EMile:
+      case Event.E2Mile:
+      case Event.EDMR:
+      case Event.ESMR:
+      case Event.EJavelin:
+      case Event.EDiscus:
+        return str(event).slice(1);
+      case Event.ERaceWalk:
+        return "Race Walk";
+      case Event.E80Hurdles:
+        return "80m Hurdles";
+      case Event.E100Hurdles:
+        return "100m Hurdles";
+      case Event.E110Hurdles:
+        return "110m Hurdles";
+      case Event.E300Hurdles:
+        return "300m Hurdles";
+      case Event.E400Hurdles:
+        return "400m Hurdles";
+      case Event.EShotput:
+        return "Shot Put";
+      case Event.ELongJump:
+        return "Long Jump";
+      case Event.EHighJump:
+        return "High Jump";
+      case Event.ETripleJump:
+        return "Triple Jump";
+      case Event.EPoleVault:
+        return "Pole Vault";
+      case Event.EJoggersMile:
+        return "Joggers Mile";
+    }
   }
 
   getSeed(): string{
