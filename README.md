@@ -12,7 +12,7 @@ MVP
  * ~~Upload file, basic parse and render in table~~
  * ~~Render "Compiled" table~~
  * ~~Add filters, transforms, ranking, sorting~~
- * Add export function to XLSX
+ * ~~Add export function to XLSX~~
 Extra
  * Add copy-to-clipboard export
  * Add configuration sidebar to allow user to toggle or specify filters/transforms
