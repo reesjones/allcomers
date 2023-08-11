@@ -127,7 +127,7 @@ export function ResultWorkbookStateless(props: ResultWorkbookStatelessProps): Re
 /**
  * Stateful version of ResultWorkbookStateless. Uses initialWorkbook
  */
-export function ResultWorkbook(props: {initialWorkbook: ?Workbook_t}): React$Element<any> {
+export function ResultWorkbook(props: {initialWorkbook: ?Workbook_t, onWorkbookChanged: ?Workbook_t => void}): React$Element<any> {
   const [workbook, setWorkbook] = useState(props.initialWorkbook);
   if (props.initialWorkbook == null) {
     return <div>No workbook selected.</div>
@@ -137,6 +137,7 @@ export function ResultWorkbook(props: {initialWorkbook: ?Workbook_t}): React$Ele
       workbook={workbook}
       onCellsChanged={(changedSheetName: string, changes: Array<CellChange<TextCell_t>>) => {
         setWorkbook(prevWorkbook => applyCellChanges(changedSheetName, changes, prevWorkbook))
+        props.onWorkbookChanged(workbook);
       }} />
   );
 }

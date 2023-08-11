@@ -47,6 +47,12 @@ export class NMFilter extends MarkFilter {
   }
 }
 
+export class EmptyMarkFilter extends MarkFilter {
+  shouldRemove(result: Result): boolean {
+    return super._shouldRemove(result, "");
+  }
+}
+
 export class EventFilter extends MarkFilter {
   excludeEvent: Event;
   constructor(excludeEvent: Event) {

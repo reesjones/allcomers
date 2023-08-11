@@ -7,7 +7,7 @@ import {Workbook} from 'xlsx';
 import {ResultParser, GoogleSheetsResultParser} from './parser';
 import {CompiledResult, Event, RankDirection, Result, ResultField} from './types';
 import {Pipeline, Ranker} from './pipeline/core';
-import {DNFFilter, DNSFilter, EventFilter, NHFilter, NMFilter, NoNameFilter} from './pipeline/filters';
+import {DNFFilter, DNSFilter, EmptyMarkFilter, EventFilter, NHFilter, NMFilter, NoNameFilter} from './pipeline/filters';
 import {AddUnattachedIfEmptyTeamTransformer} from './pipeline/transformers';
 import {fillEmpty, emptyRow, emptyCell, camelize} from './util';
 import {ReactGrid, CellChange, Column, Row, TextCell} from "@silevis/reactgrid";
@@ -106,12 +106,14 @@ function resultToRow(result: CompiledResult, fields: Array<string>): Array<strin
 }
 
 export function CompiledPane(props: {results: Array<Result>}): React$Element<any> {
+  const [workbookToExport, setWorkbookToExport] = useState<?Workbook_t>(null);
   const pipe = new PipelineBuilder()
     .filter(new NoNameFilter())
     .filter(new DNFFilter())
     .filter(new DNSFilter())
     .filter(new NHFilter())
     .filter(new NMFilter())
+    .filter(new EmptyMarkFilter())
     .filter(new EventFilter(Event.EJoggersMile))
     .transform(new AddUnattachedIfEmptyTeamTransformer())
     .rank(new Ranker(lowerIsBetterEvents), RankDirection.ASCENDING)
@@ -125,9 +127,16 @@ export function CompiledPane(props: {results: Array<Result>}): React$Element<any
   const aoa = XLSX.utils.aoa_to_sheet(rows, {dense: true});
   const aoaWorkbook = XLSX.utils.book_new();
   XLSX.utils.book_append_sheet(aoaWorkbook, aoa, "Compiled");
+  const xport = () => {
+    XLSX.writeFile(workbookToExport ?? aoaWorkbook, "CompiledResults.xlsx");
+  };
   return (
     <div>
-      <ResultWorkbook initialWorkbook={aoaWorkbook} />
+      <button onClick={xport}><b>Export XLSX!</b></button>
+      <ResultWorkbook
+        initialWorkbook={aoaWorkbook}
+        onWorkbookChanged={(newbook: ?Workbook_t) => setWorkbookToExport(newbook)}
+      />
     </div>
   );
 }
