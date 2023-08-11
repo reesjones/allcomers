@@ -1,5 +1,5 @@
 // @flow
-import type { Result } from "../types";
+import type { Result, Event } from "../types";
 
 import {Filter} from './core'
 
@@ -44,5 +44,17 @@ export class NHFilter extends MarkFilter {
 export class NMFilter extends MarkFilter {
   shouldRemove(result: Result): boolean {
     return super._shouldRemove(result, "NM");
+  }
+}
+
+export class EventFilter extends MarkFilter {
+  excludeEvent: Event;
+  constructor(excludeEvent: Event) {
+    super();
+    this.excludeEvent = excludeEvent;
+  }
+
+  shouldRemove(result: Result): boolean {
+    return result.event === this.excludeEvent;
   }
 }

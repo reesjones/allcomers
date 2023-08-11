@@ -7,7 +7,7 @@ import {Workbook} from 'xlsx';
 import {ResultParser, GoogleSheetsResultParser} from './parser';
 import {CompiledResult, Event, RankDirection, Result, ResultField} from './types';
 import {Pipeline, Ranker} from './pipeline/core';
-import {DNFFilter, DNSFilter, NHFilter, NMFilter, NoNameFilter} from './pipeline/filters';
+import {DNFFilter, DNSFilter, EventFilter, NHFilter, NMFilter, NoNameFilter} from './pipeline/filters';
 import {AddUnattachedIfEmptyTeamTransformer} from './pipeline/transformers';
 import {fillEmpty, emptyRow, emptyCell, camelize} from './util';
 import {ReactGrid, CellChange, Column, Row, TextCell} from "@silevis/reactgrid";
@@ -112,6 +112,7 @@ export function CompiledPane(props: {results: Array<Result>}): React$Element<any
     .filter(new DNSFilter())
     .filter(new NHFilter())
     .filter(new NMFilter())
+    .filter(new EventFilter(Event.EJoggersMile))
     .transform(new AddUnattachedIfEmptyTeamTransformer())
     .rank(new Ranker(lowerIsBetterEvents), RankDirection.ASCENDING)
     .rank(new Ranker(higherIsBetterEvents), RankDirection.DESCENDING)
