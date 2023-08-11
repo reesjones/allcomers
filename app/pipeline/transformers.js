@@ -5,7 +5,6 @@ import {Result, ResultField} from "../types";
 
 export class AddUnattachedIfEmptyTeamTransformer extends Transformer {
   transform(input: Result): Result {
-    // TODO implement once team field added
     const team = (input.fields.get(ResultField.TEAM) ?? "").trim().toLowerCase();
     if (team == null || team.length == 0 || team == "no team" || team == "n/a"
         || (team != "unattached" && team.includes("unattached"))) {

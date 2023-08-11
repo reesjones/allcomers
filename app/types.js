@@ -77,9 +77,6 @@ export interface Scorable {
 /**
  * Represents one result of an athlete in an event. Uniquely identified by
  * {firstName, lastName, event} fields (TODO: this can break, should handle duplicate names)
- *
- * Fields to add
- *  - place
  */
 export class Result {
   mark: string;
@@ -682,8 +679,3 @@ export class CompiledTrackResult extends CompiledResult {
     throw new Error("Unimplemented");
   }
 }
-
-// Types of results (specifies scoring and unique field requirements)
-// Division result (default is Open)
-// Track results with wind mark (100, 200, hurdles <400m)
-// Field events with wind mark (long jump, triple jump)
