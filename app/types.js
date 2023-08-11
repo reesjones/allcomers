@@ -178,6 +178,10 @@ export class Result {
     this.rank = rank;
     this.fields.set(ResultField.RANK, str(rank));
   }
+
+  getMark(): string {
+    return this.mark;
+  }
 }
 
 export enum WeightUnit {
@@ -190,6 +194,13 @@ export class JumpResult extends Result {
   constructor(event: Event, fields: Map<ResultField, string>) {
     super(ScoreBy.Distance, event, fields);
     this.fields.set(ResultField.DIVISION, this.getDivision());
+  }
+
+  getMark(): string {
+    const mark = super.getMark();
+    if (mark.length == 0) return mark;
+    const markFloat = parseFloat(mark);
+    return `${markFloat.toFixed(2)}m`;
   }
 }
 
@@ -222,12 +233,31 @@ export class ThrowResult extends Result {
   getDivision(): string {
     return `${this.implementWeight} ${str(this.implementWeightUnit).toLowerCase()}`;
   }
+
+  getMark(): string {
+    const mark = super.getMark();
+    if (mark.length == 0) return mark;
+    const markFloat = parseFloat(mark);
+    return `${markFloat.toFixed(2)}m`;
+  }
 }
 
 export class TrackResult extends Result {
   constructor(event: Event, fields: Map<ResultField, string>) {
     super(ScoreBy.Time, event, fields);
     this.fields.set(ResultField.DIVISION, this.getDivision());
+  }
+
+  getMark(): string {
+    const mark = super.getMark();
+    if (mark.length == 0) return mark;
+    const parts = mark.split(":");
+    const secs = parseFloat(parts[parts.length-1]);
+    if (isNaN(secs) || secs == null) return mark;
+    return [
+      ...parts.slice(0, parts.length-1),
+      secs < 10 ? `0${secs.toFixed(2)}` : secs.toFixed(2),
+    ].join(":");
   }
 }
 
@@ -363,7 +393,7 @@ export class CompiledResult {
   }
 
   getResult(): string {
-    const mark = this.result.mark;
+    const mark = this.result.getMark();
     // TODO: format this and return formatted
     return mark;
   }
